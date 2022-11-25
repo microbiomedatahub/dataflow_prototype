@@ -1,0 +1,5 @@
+#!/usr/bin/env perl
+
+
+#system("esearch -db bioproject -query 'txid408169[Organism:exp]' | efetch -format docsum | xtract -pattern DocumentSummary -element Project_Acc > project_acc")
+system("esearch -db bioproject -query 'txid408169[Organism:exp] AND \"Primary submission\"[Filter]' | efetch -format docsum | xtract -pattern DocumentSummary -element Project_Acc > project_acc")
