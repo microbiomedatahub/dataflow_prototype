@@ -1,0 +1,48 @@
+#!/usr/bin/env perl
+
+use File::Path 'mkpath';
+
+open(IN, 'project_acc') or die "Error.";
+open(FH, '>', 'project-biosample-relation.csv') or die $!;
+close(FN);
+
+while(<IN>){
+    chomp;
+    $acc = $_;
+    if ($acc =~/^(PRJ[A-Z]+)([0-9]+)$/) {
+       my $acc_prefix = $1;
+       my $acc_num = $2;
+       if (length($acc_num) == 5){
+          $dir = "0" . substr($acc_num, 0, 2)
+       }else{
+          $dir = substr($acc_num, 0, 3)
+       }
+       my $path = "bioproject/$acc_prefix/$dir/";
+       my $file = "$path/$acc.xml";
+       my $file_link = "$path/$acc.dblink";
+       my $file_sample = "$path/$acc-biosampleset.xml";
+       print $file,"\n";
+       if(!-d $path){
+             mkpath($path, 0664) or die "Error.";
+       }
+       if(!-f $file_link){
+           system("esearch -db bioproject -query '$acc' | elink -target biosample | efetch -format docsum | xtract -pattern DocumentSummary -element Accession >> $file_link" );
+       }
+       if(!-f $file){
+           system("efetch -db bioproject -id $acc  -mode xml > $file");
+       }
+       if(!-f $file_sample){
+          #open(BS, $file_link) or die $!;
+          #while(<BS>){
+            system("esearch -db bioproject -query '$acc' | elink -target biosample | efetch -mode xml > $file_sample");
+          #}
+          #close(BS);
+       }
+           
+       }
+    }
+    #print $acc,"\n";
+    
+}
+
+close (IN);
