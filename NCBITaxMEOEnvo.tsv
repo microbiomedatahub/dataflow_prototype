@@ -1,0 +1,50 @@
+NCBI Taxonomy ID	NCBI Taxonomy term	Microbiome Datahub preferred term	MEO ID	MEO label	ENVO ID	ENVO label
+655179	air metagenome	air	MEO_0000006	air	ENVO_00002005	air
+449393	freshwater metagenome	freshwater	MEO_0000038	freshwater	ENVO_00002011	fresh water
+1647806	lake water metagenome	freshwater	MEO_0000038	freshwater	ENVO_00002011	fresh water
+1851193	pond metagenome	freshwater	MEO_0000038	freshwater	ENVO_00002011	fresh water
+1646512	riverine metagenome	freshwater	MEO_0000038	freshwater	ENVO_00002011	fresh water
+1325974	wetland metagenome	freshwater	MEO_0000038	freshwater	ENVO_00002011	fresh water
+433727	hot springs metagenome	hot spring	MEO_0000029	hot spring	ENVO_00000051	hot spring
+408172	marine metagenome	marine	MEO_0000023	sea	ENVO_00000447	marine biome
+1561972	seawater metagenome	marine	MEO_0000023	sea	ENVO_00000447	marine biome
+556182	freshwater sediment metagenome	sediment	MEO_0000066	sediment	ENVO_00002007	sediment
+412755	marine sediment metagenome	sediment	MEO_0000066	sediment	ENVO_00002007	sediment
+749907	sediment metagenome	sediment	MEO_0000066	sediment	ENVO_00002007	sediment
+942017	activated sludge metagenome	wastewater	MEO_0000035	waste water	ENVO_00002001	waste water
+410659	mine drainage metagenome	wastewater	MEO_0000035	waste water	ENVO_00002001	waste water
+527639	wastewater metagenome	wastewater	MEO_0000035	waste water	ENVO_00002001	waste water
+1256227	indoor metagenome	human activity associated	MEO_0000837	human activity associated	ENVO_01000219	anthropogenic terrestrial biome
+410658	soil metagenome	soil	MEO_0000007	soil	ENVO_00001998	soil
+1642954	leaf litter metagenome	soil	MEO_0000007	soil	ENVO_00001998	soil
+1799672	peat metagenome	soil	MEO_0000007	soil	ENVO_00001998	soil
+1082480	permafrost metagenome	soil	MEO_0000007	soil	ENVO_00001998	soil
+1672641	rice paddy metagenome	soil	MEO_0000007	soil	ENVO_00001998	soil
+1671699	sand metagenome	soil	MEO_0000007	soil	ENVO_00001998	soil
+408170	human gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+749906	gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+410661	mouse gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+506599	bovine gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+506600	chicken gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+1861841	feces metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+1602388	fish gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+1202446	insect gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+1775950	invertebrate gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+1510822	pig gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+1436733	rat gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+1904483	sheep gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+1588881	shrimp gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+433724	termite gut metagenome	gut	MEO_0000468	gut	ENVO_2100002	intestine environment
+539655	human skin metagenome	skin	MEO_0000586	skin	ENVO_2100003	skin environment
+540585	mouse skin metagenome	skin	MEO_0000586	skin	ENVO_2100003	skin environment
+447426	human oral metagenome	oral	MEO_0000467	oral cavity	ENVO_08000002	mouth environment
+1679718	human saliva metagenome	oral	MEO_0000467	oral cavity	ENVO_08000002	mouth environment
+1227552	oral metagenome	oral	MEO_0000467	oral cavity	ENVO_08000002	mouth environment
+1842734	human reproductive system metagenome	reproductive system	MEO_0000535	genital system	UBERON_0000990	reproductive system
+1632839	human vaginal metagenome	reproductive system	MEO_0000535	genital system	UBERON_0000990	reproductive system
+1966731	reproductive system metagenome	reproductive system	MEO_0000535	genital system	UBERON_0000990	reproductive system
+1297885	plant metagenome	plant associated	MEO_0000419	plant body associated	ENVO_01001121	plant matter
+939928	rhizosphere metagenome	plant associated	MEO_0000419	plant body associated	ENVO_01001121	plant matter
+483425	endophyte metagenome	plant associated	MEO_0000419	plant body associated	ENVO_01001121	plant matter
+1297858	lief metagenome	plant associated	MEO_0000419	plant body associated	ENVO_01001121	plant matter
+662107	phyllosphere metagenome	plant associated	MEO_0000419	plant body associated	ENVO_01001121	plant matter
