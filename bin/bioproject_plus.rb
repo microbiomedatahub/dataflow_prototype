@@ -5,6 +5,7 @@ require 'nokogiri'
 require 'erb'
 require 'date'
 require 'pp'
+require 'pathname'
 
 class BioSampleSet
   include Enumerable
@@ -103,14 +104,8 @@ end
 
 class BioSample
 
-#  def initialize(xml)
-#    @biosample = Nokogiri::XML(xml).css("BioSample")
-#      raise NameError, "biosample element not found" unless @biosample
    def initialize(bs)
        @biosample = bs
-    #doc = Nokogiri::XML(xml)
-    #biosample = doc.xpath("/BioSample")
-
     if @biosample.attribute("id").nil?
       @ddbj = true
     else
@@ -381,6 +376,47 @@ EOF
   end
 end
 
+class MAG
+  def initialize(base, params ={})
+    if base.has_key?("bioproject")
+      @base = base["bioproject"]
+    else
+      @base =base
+    end
+    @params = params
+  end
+  
+  def annotate
+    File.open(@params[:dfast_qc]) do |f|
+        dfast_qc = JSON.load(f)
+        @base['_annotation'].merge!(dfast_qc['cc_result'])
+    end
+    @base["type"] = "genome"
+    @base["identifier"] = @params[:id]
+    @base["organism"] = @params[:organism]
+    @base["title"] = ""
+    @base["description"] = ""
+    @base["data type"] = "low-quality MAG" #TODO
+    @base["dateCreated"] = today
+    @base["dateModified"] = today
+    @base["data source"] =  "INSDC"
+    @base["_annotation"]["sample_count"] = 1 #TODO
+    @base["_annotation"]["sample_organism"] = [] #TODO
+    @base["_annotation"]["sample_taxid"] = [] #TODO
+    #@base["_annotation"]["sample_environment"] = "soil" #TODO
+    # dfast由来
+    # dfast_qc由来
+
+    @base
+  end
+
+  def today
+    require "date"
+    d = Date.today
+    str = d.strftime("%Y-%m-%d")
+  end 
+end
+
 require "json"
 
 
@@ -397,39 +433,48 @@ def acc2path acc
   path ="bioproject/#{acc_prefix}/#{dir}/"
 end
 
-#    if ($acc =~/^(PRJ[A-Z]+)([0-9]+)$/) {
-#       my $acc_prefix = $1;
-#       my $acc_num = $2;
-#       if (length($acc_num) == 5){
-#          $dir = "0" . substr($acc_num, 0, 2)
-#       }else{
-#          $dir = substr($acc_num, 0, 3)
-#       }
-#       my $path = "bioproject/$acc_prefix/$dir/";
-#       my $file = "$path/$acc.xml";
-#       my $file_link = "$path/$acc.dblink";
-#       my $file_sample = "$path/$acc-biosampleset.xml";
+# BioProject テストデータ作成
 
-
+# Input: ESbulkロード用Line-delimited JSON
 jsonl = 'bioproject_acc_test.jsonl'
-IO.foreach(jsonl) do |line|
-    j = JSON.parse(line)
-    if bp = j['bioproject']
-        acc = bp['identifier']
-        path = acc2path(acc)
-        file = "#{path}#{acc}-biosampleset.xml" 
-        bss = BioSampleSet.new(file)
-        ann = bss.to_json_plus
-        j['bioproject']['_annotation'] = ann
-        #pp file
-        puts j.to_json
-    else
-        puts j.to_json
+#jsonl = "bioproject_PRJDB11811.jsonl"
+
+# Output: ESbulkロード用Line-delimited JSON (_annotation追加)
+File.open('mdatahub_genome_test.jsonl',mode = "w") do |out_g|
+File.open('mdatahub_bioproject_test.jsonl',mode = "w") do |out_p|
+    IO.foreach(jsonl) do |line|
+        j = JSON.parse(line)
+        if bp = j['bioproject']
+            acc = bp['identifier']
+            warn "####{acc}"
+            path = acc2path(acc)
+            file = "#{path}#{acc}-biosampleset.xml" 
+            bss = BioSampleSet.new(file)
+            ann = bss.to_json_plus
+            j['bioproject']['_annotation'] = ann
+            out_p.puts j['bioproject'].to_json
+            
+            ### MAG test FIXME
+            Dir.glob('**/dqc_result.json', File::FNM_DOTMATCH, base: "mdatahub.org/data/test_dfast_qc/#{acc}").each do |file|
+              path = "mdatahub.org/data/test_dfast_qc/#{acc}/#{file}"
+              warn "####{path}"
+              pn = Pathname.new(path)
+              name = pn.dirname.basename
+              mag_id = "#{acc}_#{name}"
+              mag = MAG.new(j,{"id": "#{mag_id}", "organism": "hogehoge","dfast_qc": path}).annotate
+              ex_index = {'index'=> {'_index'=> 'genome', '_type'=> 'metadata', '_id'=> mag_id } }
+              out_g.puts ex_index.to_json
+              out_g.puts mag.to_json
+            end
+        else
+            #puts j.to_json
+            out_p.puts j.to_json
+        end
     end
 end
-
+end
 exit
-xml =  ARGV.shift || 'bioproject/PRJDB/011/PRJDB11811-biosampleset.xml'
-bss = BioSampleSet.new(xml)
-#bss.to_json
-bss.to_json_plus
+#xml =  ARGV.shift || 'bioproject/PRJDB/011/PRJDB11811-biosampleset.xml'
+#bss = BioSampleSet.new(xml)
+##bss.to_json
+#bss.to_json_plus
