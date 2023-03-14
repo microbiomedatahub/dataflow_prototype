@@ -53,7 +53,6 @@ class BioSampleSet
 
   def to_json_plus
     ann = json_plus_default
-
     self.each_with_index do |biosample,i|
         ann['sample_count'] += 1
         ann['sample_organism'].push(biosample.organism)
@@ -90,7 +89,8 @@ class BioSampleSet
        ann['sample_organism'].uniq!
        ann.delete('sample_ph')
        ann.delete('sample_temperature')
-    pp ann
+    #pp ann
+    ann
   end
 
   def to_json
@@ -381,7 +381,54 @@ EOF
   end
 end
 
+require "json"
 
+
+def acc2path acc
+  m = acc.match(/^(PRJ[A-Z]+)([0-9]+)$/)
+  acc_prefix = m[1]
+  acc_num = m[2]
+  dir =""
+  if acc_num.length == 5
+      dir = "0" + acc_num.slice(0,2)
+  else
+      dir = acc_num.slice(0,3)
+  end
+  path ="bioproject/#{acc_prefix}/#{dir}/"
+end
+
+#    if ($acc =~/^(PRJ[A-Z]+)([0-9]+)$/) {
+#       my $acc_prefix = $1;
+#       my $acc_num = $2;
+#       if (length($acc_num) == 5){
+#          $dir = "0" . substr($acc_num, 0, 2)
+#       }else{
+#          $dir = substr($acc_num, 0, 3)
+#       }
+#       my $path = "bioproject/$acc_prefix/$dir/";
+#       my $file = "$path/$acc.xml";
+#       my $file_link = "$path/$acc.dblink";
+#       my $file_sample = "$path/$acc-biosampleset.xml";
+
+
+jsonl = 'bioproject_acc_test.jsonl'
+IO.foreach(jsonl) do |line|
+    j = JSON.parse(line)
+    if bp = j['bioproject']
+        acc = bp['identifier']
+        path = acc2path(acc)
+        file = "#{path}#{acc}-biosampleset.xml" 
+        bss = BioSampleSet.new(file)
+        ann = bss.to_json_plus
+        j['bioproject']['_annotation'] = ann
+        #pp file
+        puts j.to_json
+    else
+        puts j.to_json
+    end
+end
+
+exit
 xml =  ARGV.shift || 'bioproject/PRJDB/011/PRJDB11811-biosampleset.xml'
 bss = BioSampleSet.new(xml)
 #bss.to_json
