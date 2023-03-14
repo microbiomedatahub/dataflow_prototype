@@ -2,9 +2,11 @@
 
 use File::Path 'mkpath';
 
-open(IN, 'project_acc') or die "Error.";
-open(FH, '>', 'project-biosample-relation.csv') or die $!;
-close(FN);
+my $input = shift || 'project_acc' ;
+
+open(IN, $input) or die "Error.";
+#open(FH, '>', 'project-biosample-relation.csv') or die $!;
+#close(FN);
 
 while(<IN>){
     chomp;
