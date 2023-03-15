@@ -434,11 +434,8 @@ def acc2path acc
 end
 
 # BioProject テストデータ作成
-
 # Input: ESbulkロード用Line-delimited JSON
 jsonl = 'bioproject_acc_test.jsonl'
-#jsonl = "bioproject_PRJDB11811.jsonl"
-
 # Output: ESbulkロード用Line-delimited JSON (_annotation追加)
 File.open('mdatahub_genome_test.jsonl',mode = "w") do |out_g|
 File.open('mdatahub_bioproject_test.jsonl',mode = "w") do |out_p|
@@ -452,29 +449,29 @@ File.open('mdatahub_bioproject_test.jsonl',mode = "w") do |out_p|
             bss = BioSampleSet.new(file)
             ann = bss.to_json_plus
             j['bioproject']['_annotation'] = ann
-            out_p.puts j['bioproject'].to_json
-            
+            genome_count = 0
+            has_analysis = false
             ### MAG test FIXME
             Dir.glob('**/dqc_result.json', File::FNM_DOTMATCH, base: "mdatahub.org/data/test_dfast_qc/#{acc}").each do |file|
+              genome_count +=1
+              has_analysis = true
               path = "mdatahub.org/data/test_dfast_qc/#{acc}/#{file}"
               warn "####{path}"
               pn = Pathname.new(path)
               name = pn.dirname.basename
               mag_id = "#{acc}_#{name}"
-              mag = MAG.new(j,{"id": "#{mag_id}", "organism": "hogehoge","dfast_qc": path}).annotate
+              g = Marshal.load(Marshal.dump(j))
+              mag = MAG.new(g,{"id": "#{mag_id}", "organism": "hogehoge","dfast_qc": path})
               ex_index = {'index'=> {'_index'=> 'genome', '_type'=> 'metadata', '_id'=> mag_id } }
               out_g.puts ex_index.to_json
-              out_g.puts mag.to_json
+              out_g.puts mag.annotate.to_json
             end
+            j['bioproject']['_annotation']['genome_count'] = genome_count
+            j['bioproject']['has_analysis'] = has_analysis
+            out_p.puts j['bioproject'].to_json
         else
-            #puts j.to_json
             out_p.puts j.to_json
         end
     end
 end
 end
-exit
-#xml =  ARGV.shift || 'bioproject/PRJDB/011/PRJDB11811-biosampleset.xml'
-#bss = BioSampleSet.new(xml)
-##bss.to_json
-#bss.to_json_plus
