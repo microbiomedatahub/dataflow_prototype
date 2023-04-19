@@ -63,10 +63,20 @@ class BioSampleSet
           value = att[:value]
           case att[:display_name]
             when "pH", "fermentation pH","soil pH","surface moisture pH","wastewater pH","water pH"
-                ann['sample_ph'].push(att[:value])
+                val = att[:value].delete("^(0-9|\.)")
+                #puts "### #{att[:value]} --> #{val}"
+                ann['sample_ph'].push(val.to_f) unless val ==""
+                #ann['sample_ph'].push(att[:value])
             #when /temperature/i
             when "air temperature","annual and seasonal temperature","average temperature","depth (TVDSS) of hydrocarbon resource temperature","dew point","fermentation temperature","food stored by consumer (storage temperature)","host body temperature","hydrocarbon resource original temperature","mean annual temperature","mean seasonal temperature","pour point","sample storage temperature","sample transport temperature","soil temperature","study incubation temperature","surface temperature","temperature","temperature outside house","wastewater temperature"
-                ann['sample_temperature'].push(att[:value])
+                #val = att[:value].gsub(" C","")
+                #att[:value].class
+                #val = [att[:value].to_f].grep(Numeric).first
+                #TODO: Fahrenheit → Celsius
+                val = att[:value].delete("^(0-9|\.)")
+                #puts "### #{att[:value]} --> #{val}"
+                #pp "###{val}###"
+                ann['sample_temperature'].push(val.to_f) unless val == ""
             when "host"
                 ann['sample_host_organism'].push(att[:value])
             when "disease","fetal health status", "host disease", "health","health status","host health state","host of the symbiotic host disease status","outbreak","study disease"
@@ -81,8 +91,11 @@ class BioSampleSet
             end
         end
     end
-       ann['sample_ph_range'] = [ ann['sample_ph'].min, ann['sample_ph'].max]
-       ann['sample_temperature_range'] = [ ann['sample_temperature'].min, ann['sample_temperature'].max]
+       #pp  ann['sample_temperature']
+       ann['sample_ph_range'] = { "min"=> ann['sample_ph'].min, "max" => ann['sample_ph'].max }
+       ann['sample_temperature_range'] = { "min"=>  ann['sample_temperature'].min, "max" => ann['sample_temperature'].max }
+       #warn ann['sample_ph_range']
+       #warn ann['sample_temperature_range'] 
        ann['sample_taxid'].uniq!
        ann['sample_host_organism'].uniq!
        ann['sample_host_disease'].uniq!
@@ -396,10 +409,10 @@ class MAG
     @base["organism"] = @params[:organism]
     @base["title"] = ""
     @base["description"] = ""
-    @base["data type"] = "low-quality MAG" #TODO
+    @base["data_type"] = "low-quality MAG" #TODO
     @base["dateCreated"] = today
     @base["dateModified"] = today
-    @base["data source"] =  "INSDC"
+    @base["data_source"] =  "INSDC"
     @base["_annotation"]["sample_count"] = 1 #TODO
     @base["_annotation"]["sample_organism"] = [] #TODO
     @base["_annotation"]["sample_taxid"] = [] #TODO
