@@ -1,0 +1,210 @@
+#!/usr/bin/env ruby
+
+require "fileutils"
+require 'pp'
+
+class AssemblyReports2RDF
+
+  attr_accessor :status
+
+  def initialize input,output 
+    @root_path = input 
+    @out_path  = output
+    @status = Hash.new{|h,k|h[k]=0}
+    #output_prefix f
+    @paths =[]
+    datasets.each do |key, dataset|
+      @source = dataset[:source]
+      @idtype = dataset[:idtype]
+      @reports =[]
+      @out_summary=dataset[:outpath]
+      parse_summary "#{@root_path}/#{dataset[:path]}"
+    end
+    @paths.each do |path|
+       output_each_assembly path
+    end
+  end
+
+  def datasets
+     {:insdc =>
+         { name: 'INSDC',
+           path: 'genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt',
+           outpath: 'genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.ttl',
+           source: 'assembly_summary_genbank.txt',
+           idtype: 'insdc'
+         },
+      :refseq =>
+         { name: 'RefSeq',
+           path: 'genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt',
+           outpath: 'genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.ttl',
+           source: 'assembly_summary_refseq.txt',
+           idtype: 'refseq'
+         }
+     }
+  end
+
+  def parse_summary file_path 
+    require 'uri'
+
+    out_file = "#{@out_path}/#{@out_summary}"
+    out_dir  = File.dirname(out_file)
+    FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir)
+    #puts out_file
+    File.open(out_file,"w") do |f| 
+      head = []
+      File.readlines("#{file_path}",:encoding =>'UTF-8').each_with_index do |line,i|
+        if i == 0  # description row
+        elsif i == 1
+          head =line.strip.gsub("\r","").gsub(/^#/,"").strip.split("\t")
+        else
+          project =  head.zip(line.strip.split("\t")).inject({}){|h,col| h[col[0]]=col[1];h}
+          #base_path = project['ftp_path'].sub('https://ftp.ncbi.nlm.nih.gov/', '')
+          #puts project['assembly_accession']
+          #uri = URI.parse(project['ftp_path'])
+          next unless project['excluded_from_refseq'].match("derived from metagenome")
+          basename = File.basename(URI.parse(project['ftp_path']).path)
+
+          genomic_fna =  [project['ftp_path'], "#{basename}_genomic.fna.gz" ].join('/')
+
+          require 'open-uri'
+
+          genomic_fna_path = "#{@out_path}/#{URI.parse(genomic_fna).path}"
+          
+          out_dir  = File.dirname(genomic_fna_path)
+          FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir) 
+
+          puts genomic_fna_path
+          URI.open(genomic_fna) do |res|
+                IO.copy_stream(res, genomic_fna_path)
+          end
+
+          #puts project['ftp_path']
+          #pp project
+          #@reports << head.zip(line.strip.split("\t")).inject({}){|h,col| h[col[0]]=col[1];h}
+        end
+      end
+    end
+  end
+
+  def output_pv k,v,f
+      #p [k,v]
+       case k
+       ### assembly_reports
+       when 'assembly_id', 'assembly_accession'
+           f.puts "\tasm:assembly_id\t#{quote(v)} ;"
+       #when 'bioproject'
+       #when 'biosample'
+       when 'wgs_master'
+          f.puts "\tasm:wgs_master\t#{quote(v)} ;"
+       when 'refseq_category'
+           f.puts "\tasm:refseq_category\t#{quote(v)} ;"
+       #when 'organism_name'
+       #when 'tax_id'
+       when 'species_taxid'
+           f.puts "\tasm:species_taxid\t#{quote(v)} ;"
+       when 'infraspecific_name'
+           f.puts "\tasm:infraspecific_name\t#{quote(v)} ;"
+       when 'isolate'
+           f.puts "\tasm:isolate\t#{quote(v)} ;"
+       when 'version_status'
+           f.puts "\tasm:version_status\t#{quote(v)} ;"
+       when 'assembly_level'
+           f.puts "\tasm:assembly_level\t#{quote(v)} ;"
+       when 'release_type'
+           f.puts "\tasm:release_type\t#{quote(v)} ;"
+       when 'genome_rep'
+           f.puts "\tasm:genome_rep\t#{quote(v)} ;"
+       #when 'seq_rel_date'
+       when 'asm_name'
+           f.puts "\tasm:asm_name\t#{quote(v)} ;"
+       when 'submitter'
+           f.puts "\tasm:submitter\t#{quote(v)} ;"
+       when 'gbrs_paired_asm'
+           f.puts "\tasm:gbrs_paired_asm\t#{quote(v)} ;"
+       when 'paired_asm_comp'
+           f.puts "\tasm:paired_asm_comp\t#{quote(v)} ;"
+       ### genome_reports
+       when 'Organism/Name', 'organism_name'
+           f.puts "\tasm:organism_name\t#{quote(v)} ;" 
+       when 'TaxID','taxid'
+          f.puts "\tasm:tax_id\t#{quote(v)} ;"
+          f.puts "\tasm:taxon\t<http://identifiers.org/taxonomy/#{v}> ;" if v !='-'
+       when 'BioProject Accession','bioproject'
+          f.puts "\tasm:bioproject_accession\t#{quote(v)} ;"
+          f.puts "\tasm:bioproject\t<http://identifiers.org/bioproject/#{v}> ;"
+       when 'BioProject ID'
+          f.puts "\tasm:bioproject_id\t#{quote(v)} ;"
+       when 'Group'
+          f.puts "\tasm:group\t#{quote(v)} ;"
+       when 'SubGroup'
+          f.puts "\tasm:subgroup\t#{quote(v)} ;"
+       when 'Size (Mb)'
+          f.puts "\tasm:size\t#{quote(v)} ;"
+       when 'GC%'
+          f.puts "\tasm:gc\t#{quote(v)} ;"
+       when 'Assembly Accession'
+          f.puts "\t_asm:assembly_accession\t#{quote(v)} ;"
+       when 'Chromosomes'
+          f.puts "\tasm:chromosomes\t#{quote(v)} ;"
+       when 'Organelles'
+          f.puts "\tasm:organelles\t#{quote(v)} ;"
+       when 'Plasmids'
+          f.puts "\tasm:plasmids\t#{quote(v)} ;"
+       when 'WGS'
+          f.puts "\tasm:wgs\t#{quote(v)} ;"
+       when 'Scaffolds'
+          f.puts "\tasm:scaffolds\t#{quote(v)} ;"
+       when 'Genes'
+          f.puts "\tasm:genes\t#{quote(v)} ;"
+       when 'Proteins'
+          f.puts "\tasm:proteins\t#{quote(v)} ;"
+       when 'Release Date', 'seq_rel_date'
+          f.puts "\tasm:release_date\t#{quote(v)} ;"
+       when 'Modify Date'
+          f.puts "\tasm:modify_date\t#{quote(v)} ;"
+       when 'Status'
+          f.puts "\tasm:status\t#{quote(v)} ;"
+          #puts "\t:status2so\t#{term2so(v)} ;"
+       when 'Center'
+          f.puts "\tasm:center\t#{quote(v)} ;"
+       when 'BioSample Accession','biosample'
+          f.puts "\tasm:biosample_accession\t#{quote(v)} ;"
+          f.puts "\tasm:biosample\t<http://identifiers.org/biosample/#{v}> ;" if (v != '-' and  v != 'na' and v != '')
+       when 'Chromosomes/RefSeq'
+          f.puts "\tasm:chromosomes_refseq\t#{quote(v)} ; #only prokaryotes"
+          #resource_sequence(v,k)
+          #v.split(",").each { |vv| puts "\t:chromosome\t<http://identifiers.org/refseq/#{vv}> ;"} if v != '-'
+       when 'Chromosomes/INSDC'
+          f.puts "\tasm:chromosomes_insdc\t#{quote(v)} ; #only prokaryotes"
+       when 'Plasmids/RefSeq'
+          f.puts "\tasm:plasmids_refseq\t#{quote(v)} ; #only prokaryotes"
+          #resource_sequence(v,k)
+          #v.split(",").each { |vv| puts "\t:plasmid\t<http://identifiers.org/refseq/#{vv}> ;"} if v != '-'
+       when 'Plasmids/INSDC'
+          f.puts "\tasm:plasmids_insdc\t#{quote(v)} ; #only prokaryotes"
+       when 'Reference'
+          f.puts "\tasm:reference\t#{quote(v)}; #only prokaryotes"
+       when 'FTP Path' , 'ftp_path'
+          f.puts "\tasm:ftp_path\t#{quote(v)}; #only prokaryotes"
+       when 'excluded_from_refseq'
+          f.puts "\tasm:excluded_from_refseq\t#{quote(v)} ;"
+       when 'Pubmed ID'
+          f.puts "\tasm:pubmed_id\t#{quote(v)} ; #only prokaryotes"
+       when 'relation_to_type_material'
+          f.puts "\tasm:relation_to_type_material\t#{quote(v)} ;"
+       when 'asm_not_live_date'
+          f.puts "\tasm:asm_not_live_date\t#{quote(v)} ;"
+       else
+           f.puts "     when '#{k}'"
+           warn "undefied key: #{k}"
+           raise error
+       end
+  end
+end
+
+input = ARGV.shift
+output= ARGV.shift
+
+AssemblyReports2RDF.new(input,output)
+
+
