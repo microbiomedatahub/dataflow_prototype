@@ -75,7 +75,7 @@ class AssemblyReports2RDF
           project =  head.zip(line.strip.split("\t")).inject({}){|h,col| h[col[0]]=col[1];h}
           acc= project['assembly_accession'] 
           next unless @filter.key? acc
-          next unless project['excluded_from_refseq'].match("derived from metagenome")
+          #next unless project['excluded_from_refseq'].match("derived from metagenome")
           basename = File.basename(URI.parse(project['ftp_path']).path)
           genomic_fna =  [project['ftp_path'], "#{basename}_genomic.fna.gz" ].join('/')
           genomic_fna_path = "#{@out_path}/#{URI.parse(genomic_fna).path}"
@@ -84,7 +84,7 @@ class AssemblyReports2RDF
           FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir) 
 
           puts genomic_fna_path
-          next
+          #next
           URI.open(genomic_fna) do |res|
                 IO.copy_stream(res, genomic_fna_path)
           end
