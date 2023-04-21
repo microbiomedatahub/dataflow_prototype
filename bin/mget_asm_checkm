@@ -1,0 +1,102 @@
+#!/usr/bin/env ruby
+
+require "fileutils"
+require 'pp'
+require 'uri'
+require 'open-uri'
+
+class AssemblyReports2RDF
+
+  attr_accessor :status
+
+  def initialize input,output 
+    @root_path = input 
+    @out_path  = output
+    @status = Hash.new{|h,k|h[k]=0}
+    #output_prefix f
+    @paths =[]
+    datasets.each do |key, dataset|
+      @source = dataset[:source]
+      @idtype = dataset[:idtype]
+      @reports =[]
+      @out_summary=dataset[:outpath]
+      parse_summary "#{@root_path}/#{dataset[:path]}"
+    end
+    #@paths.each do |path|
+    #   output_each_assembly path
+    #end
+  end
+
+  def datasets
+     {:insdc =>
+         { name: 'INSDC',
+           path: 'genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt',
+           outpath: 'genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.ttl',
+           source: 'assembly_summary_genbank.txt',
+           idtype: 'insdc'
+         },
+      :refseq =>
+         { name: 'RefSeq',
+           path: 'genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt',
+           outpath: 'genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.ttl',
+           source: 'assembly_summary_refseq.txt',
+           idtype: 'refseq'
+         }
+     }
+  end
+
+  def filter_checkm_prokryote
+      @filter = {}
+      file_path = 'genomes/ASSEMBLY_REPORTS/CheckM_report_prokaryotes.txt'
+      File.readlines("#{file_path}",:encoding =>'UTF-8').each_with_index do |line,i|
+          next if line.match(/^#/)
+          row = line.strip.gsub("\r","").gsub(/^#/,"").strip.split("\t")
+          #puts row[1]
+          @filter[row[1]] = 1
+      end
+      #pp @filter
+  end
+
+  def parse_summary file_path 
+
+    filter_checkm_prokryote
+
+    out_file = "#{@out_path}/#{@out_summary}"
+    out_dir  = File.dirname(out_file)
+    #FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir)
+    #puts out_file
+    #File.open(out_file,"w") do |f| 
+      head = []
+      File.readlines("#{file_path}",:encoding =>'UTF-8').each_with_index do |line,i|
+        if i == 0  # description row
+        elsif i == 1
+          head =line.strip.gsub("\r","").gsub(/^#/,"").strip.split("\t")
+        else
+          project =  head.zip(line.strip.split("\t")).inject({}){|h,col| h[col[0]]=col[1];h}
+          acc= project['assembly_accession'] 
+          next unless @filter.key? acc
+          next unless project['excluded_from_refseq'].match("derived from metagenome")
+          basename = File.basename(URI.parse(project['ftp_path']).path)
+          genomic_fna =  [project['ftp_path'], "#{basename}_genomic.fna.gz" ].join('/')
+          genomic_fna_path = "#{@out_path}/#{URI.parse(genomic_fna).path}"
+          
+          out_dir  = File.dirname(genomic_fna_path)
+          FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir) 
+
+          puts genomic_fna_path
+          next
+          URI.open(genomic_fna) do |res|
+                IO.copy_stream(res, genomic_fna_path)
+          end
+        end
+      end
+    #end
+  end
+end
+
+input = ARGV.shift
+output= ARGV.shift
+
+AssemblyReports2RDF.new(input,output)
+
+
