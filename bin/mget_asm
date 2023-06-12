@@ -62,14 +62,20 @@ class AssemblyReports2RDF
           next unless project['excluded_from_refseq'].match("derived from metagenome")
           basename = File.basename(URI.parse(project['ftp_path']).path)
           genomic_fna =  [project['ftp_path'], "#{basename}_genomic.fna.gz" ].join('/')
+          genomic_fna_out = [out_dir, "#{basename}_genomic.fna.gz" ].join('/')
+
+          require 'open-uri'
+
           genomic_fna_path = "#{@out_path}/#{URI.parse(genomic_fna).path}"
           
           out_dir  = File.dirname(genomic_fna_path)
           FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir) 
-
-          puts genomic_fna_path
-          URI.open(genomic_fna) do |res|
+          #puts genomic_fna_out
+          unless FileTest.exist?(genomic_fna_path)
+            puts genomic_fna_path
+            URI.open(genomic_fna) do |res|
                 IO.copy_stream(res, genomic_fna_path)
+            end
           end
         end
       end

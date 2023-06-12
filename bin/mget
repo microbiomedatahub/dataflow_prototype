@@ -15,9 +15,13 @@ while(<IN>){
        my $acc_prefix = $1;
        my $acc_num = $2;
        if (length($acc_num) == 5){
-          $dir = "0" . substr($acc_num, 0, 2)
+          $dir = "0" . substr($acc_num, 0, 2);
+       }elsif ( length($acc_num) == 4){
+	  $dir = "00". substr($acc_num, 0, 1);
+       }elsif ( length($acc_num) <= 3){  
+	  $dir = "000";
        }else{
-          $dir = substr($acc_num, 0, 3)
+          $dir = substr($acc_num, 0, 3);
        }
        my $path = "bioproject/$acc_prefix/$dir/";
        my $file = "$path/$acc.xml";

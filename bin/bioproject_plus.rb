@@ -10,7 +10,7 @@ require 'pathname'
 class BioSampleSet
   include Enumerable
 
-  def initialize(xml, params ={})
+  def initialize(xml='', params ={})
     @xml =xml  
   end
 
@@ -438,30 +438,54 @@ def acc2path acc
   acc_prefix = m[1]
   acc_num = m[2]
   dir =""
-  if acc_num.length == 5
-      dir = "0" + acc_num.slice(0,2)
-  else
+  if acc_num.length == 6
       dir = acc_num.slice(0,3)
+  elsif acc_num.length == 5
+      dir = "0" + acc_num.slice(0,2)
+  elsif acc_num.length == 4    
+      dir = "00" + acc_num.slice(0,1)
+  elsif acc_num.length <= 3    
+      dir = "000"
+  else
+      #dir = acc_num.slice(0,3)
+      exit "undefined directory: #{acc_num}"
   end
   path ="bioproject/#{acc_prefix}/#{dir}/"
 end
 
 # BioProject テストデータ作成
 # Input: ESbulkロード用Line-delimited JSON
-jsonl = 'bioproject_acc_test.jsonl'
+#jsonl = 'bioproject_acc_test.jsonl'
+#jsonl = '/work1/mdatahub/public/project/bioproject_0313.jsonl'
+#jsonl = 'debug.jsonld'
+jsonl = '/work1/mdatahub/public/project/bioproject_0204.jsonl'
+#index_project = 'mdatahub_bioproject_test.jsonl'
+index_project = 'mdatahub_project.jsonl'
+#index_genome = 'mdatahub_bioproject_test.jsonl'
+index_genome = 'mdatahub_genome.jsonl'
 # Output: ESbulkロード用Line-delimited JSON (_annotation追加)
-File.open('mdatahub_genome_test.jsonl',mode = "w") do |out_g|
-File.open('mdatahub_bioproject_test.jsonl',mode = "w") do |out_p|
+File.open(index_genome,mode = "w") do |out_g|
+File.open(index_project ,mode = "w") do |out_p|
     IO.foreach(jsonl) do |line|
         j = JSON.parse(line)
         if bp = j['bioproject']
             acc = bp['identifier']
-            warn "####{acc}"
-            path = acc2path(acc)
+            #warn "####{bp}" unless acc
+            #warn "####{bp}" 
+            begin
+              path = acc2path(acc)
+            rescue AccPathError => ex
+             pp j
+             raise
+            end
             file = "#{path}#{acc}-biosampleset.xml" 
-            bss = BioSampleSet.new(file)
-            ann = bss.to_json_plus
-            j['bioproject']['_annotation'] = ann
+            if File.exist? file
+              bss = BioSampleSet.new(file)
+              ann = bss.to_json_plus
+              j['bioproject']['_annotation'] = ann
+            else
+              j['bioproject']['_annotation'] = BioSampleSet.new.json_plus_default
+            end
             genome_count = 0
             has_analysis = false
             ### MAG test FIXME
