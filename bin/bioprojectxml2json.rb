@@ -142,7 +142,8 @@ class Nokogiri::XML::EnumParse
         end
     end
 end
-
+#input_path = 'C:\Users\iota_\Downloads\bioproject.xml'
+input_path = 'bioproject.xml'
 out_path = 'bioproject.json'
 
 output_ractor = Ractor.new(out_path) do |out_path|
@@ -159,7 +160,7 @@ print Time.now, " Started\n"
 File.delete(out_path) rescue nil
 c = 0
 reader = Nokogiri::XML::EnumParse
-    .new('C:\Users\iota_\Downloads\bioproject.xml', 'Package')
+    .new(input_path, 'Package')
     .enumerator
 reader.each do |elm|
     c += 1
