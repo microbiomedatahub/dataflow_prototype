@@ -6,6 +6,39 @@ require 'erb'
 require 'date'
 require 'pp'
 require 'pathname'
+#require 'fileutils'
+require "json"
+
+def acc2path acc
+  m = acc.match(/^(PRJ[A-Z]+)([0-9]+)$/)
+  acc_prefix = m[1]
+  acc_num = m[2]
+  dir =""
+  if acc_num.length == 6
+      dir = acc_num.slice(0,3)
+      dir2= acc
+  elsif acc_num.length == 5
+      dir = "0" + acc_num.slice(0,2)
+      dir2= acc_prefix + "0" + acc_num
+  elsif acc_num.length == 4
+      dir = "00" + acc_num.slice(0,1)
+      dir2= acc_prefix + "00" + acc_num
+  elsif acc_num.length == 3
+      dir = "000"
+      dir2 = acc_prefix + "000" + acc_num
+  elsif acc_num.length == 2
+      dir = "000"
+      dir2 = acc_prefix + "0000" + acc_num
+  elsif acc_num.length == 1
+      dir = "000"
+      dir2 = acc_prefix + "00000" + acc_num
+  else
+      #dir = acc_num.slice(0,3)
+      exit "undefined directory: #{acc_num}"
+  end
+  path ="#{acc_prefix}/#{dir}/#{dir2}"
+end
+
 
 class BioSampleSet
   include Enumerable
@@ -428,87 +461,4 @@ class MAG
     d = Date.today
     str = d.strftime("%Y-%m-%d")
   end 
-end
-
-require "json"
-
-
-def acc2path acc
-  m = acc.match(/^(PRJ[A-Z]+)([0-9]+)$/)
-  acc_prefix = m[1]
-  acc_num = m[2]
-  dir =""
-  if acc_num.length == 6
-      dir = acc_num.slice(0,3)
-  elsif acc_num.length == 5
-      dir = "0" + acc_num.slice(0,2)
-  elsif acc_num.length == 4    
-      dir = "00" + acc_num.slice(0,1)
-  elsif acc_num.length <= 3    
-      dir = "000"
-  else
-      #dir = acc_num.slice(0,3)
-      exit "undefined directory: #{acc_num}"
-  end
-  path ="bioproject/#{acc_prefix}/#{dir}/"
-end
-
-# BioProject テストデータ作成
-# Input: ESbulkロード用Line-delimited JSON
-#jsonl = 'bioproject_acc_test.jsonl'
-#jsonl = '/work1/mdatahub/public/project/bioproject_0313.jsonl'
-#jsonl = 'debug.jsonld'
-jsonl = '/work1/mdatahub/public/project/bioproject_0204.jsonl'
-#index_project = 'mdatahub_bioproject_test.jsonl'
-index_project = 'mdatahub_project.jsonl'
-#index_genome = 'mdatahub_bioproject_test.jsonl'
-index_genome = 'mdatahub_genome.jsonl'
-# Output: ESbulkロード用Line-delimited JSON (_annotation追加)
-File.open(index_genome,mode = "w") do |out_g|
-File.open(index_project ,mode = "w") do |out_p|
-    IO.foreach(jsonl) do |line|
-        j = JSON.parse(line)
-        if bp = j['bioproject']
-            acc = bp['identifier']
-            #warn "####{bp}" unless acc
-            #warn "####{bp}" 
-            begin
-              path = acc2path(acc)
-            rescue AccPathError => ex
-             pp j
-             raise
-            end
-            file = "#{path}#{acc}-biosampleset.xml" 
-            if File.exist? file
-              bss = BioSampleSet.new(file)
-              ann = bss.to_json_plus
-              j['bioproject']['_annotation'] = ann
-            else
-              j['bioproject']['_annotation'] = BioSampleSet.new.json_plus_default
-            end
-            genome_count = 0
-            has_analysis = false
-            ### MAG test FIXME
-            Dir.glob('**/dqc_result.json', File::FNM_DOTMATCH, base: "mdatahub.org/data/test_dfast_qc/#{acc}").each do |file|
-              genome_count +=1
-              has_analysis = true
-              path = "mdatahub.org/data/test_dfast_qc/#{acc}/#{file}"
-              warn "####{path}"
-              pn = Pathname.new(path)
-              name = pn.dirname.basename
-              mag_id = "#{acc}_#{name}"
-              g = Marshal.load(Marshal.dump(j))
-              mag = MAG.new(g,{"id": "#{mag_id}", "organism": "hogehoge","dfast_qc": path})
-              ex_index = {'index'=> {'_index'=> 'genome', '_type'=> 'metadata', '_id'=> mag_id } }
-              out_g.puts ex_index.to_json
-              out_g.puts mag.annotate.to_json
-            end
-            j['bioproject']['_annotation']['genome_count'] = genome_count
-            j['bioproject']['has_analysis'] = has_analysis
-            out_p.puts j['bioproject'].to_json
-        else
-            out_p.puts j.to_json
-        end
-    end
-end
 end

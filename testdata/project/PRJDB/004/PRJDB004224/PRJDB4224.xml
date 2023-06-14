@@ -1,0 +1,43 @@
+<?xml version="1.0" ?>
+<RecordSet><DocumentSummary uid="407444">
+    <Project>
+        <ProjectID>
+            <ArchiveID accession="PRJDB4224" archive="DDBJ" id="407444"/>
+        </ProjectID>
+        <ProjectDescr>
+            <Name>soil metagenome</Name>
+            <Title>Microbial communities associated with natural and commercially grown rooibos (Aspalathus linearis) plants</Title>
+            <Description>The Cape Floristic Region has an exceptionally high floral diversity and is recognized as one of the world's biodiversity hotspots. However, this region has a poor record of conservation and may endemic plant species are now classified as endangered. One of the main threats to the region's ecosystem is the overexploitation of economically valuable plant species such as rooibos (Aspalathus linearis). The aim of this study was to determine the microbial rhizosphere community structures of rooibos plants in natural and commercial areas. Rhizosphere soil, root samples and bulk soil were collected from natural and commercial rooibs sites located on two different farms situated in the Cederberg area, the north-western region of the fynbos biome.</Description>
+            <ProjectReleaseDate>2017-09-14T22:01:39Z</ProjectReleaseDate>
+        </ProjectDescr>
+        <ProjectType>
+            <ProjectTypeSubmission>
+                <Target capture="eTargetedLocusLoci" material="ePartialGenome" sample_scope="eEnvironment">
+                    <Organism species="410658" taxID="410658">
+                        <OrganismName>soil metagenome</OrganismName>
+                        <Supergroup>eOther</Supergroup>
+                    </Organism>
+                </Target>
+                <Method method_type="eSequencing"/>
+                <Objectives>
+                    <Data data_type="eRawSequenceReads"/>
+                </Objectives>
+                <ProjectDataTypeSet>
+                    <DataType>Targeted Locus (Loci)</DataType>
+                </ProjectDataTypeSet>
+            </ProjectTypeSubmission>
+        </ProjectType>
+    </Project>
+    <Submission last_update="2017-09-15" submitted="2015-09-14">
+        <Description>
+            <!-- Submitter information has been removed -->
+            <Organization role="owner" type="center">
+                <Name>Stellenbosch University</Name>
+                <!-- Contact information has been removed -->
+            </Organization>
+            <Access>public</Access>
+        </Description>
+    </Submission>
+</DocumentSummary>
+
+</RecordSet>

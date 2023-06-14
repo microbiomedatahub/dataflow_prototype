@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+<RecordSet><DocumentSummary uid="520750">
+    <Project>
+        <ProjectID>
+            <ArchiveID accession="PRJDB4176" archive="DDBJ" id="520750"/>
+        </ProjectID>
+        <ProjectDescr>
+            <Name>human gut metagenome</Name>
+            <Title>metagenomic data from human fecal samples</Title>
+            <Description>Total microbial community DNA was isolated from the fecal samples of Japanese patients who underwent colonoscopy at National Cancer Research Center. The study population contains health, early and advanced cancer stages.</Description>
+            <Grant GrantId="221S0002">
+                <Title>Genome Science</Title>
+                <Agency abbr="MEXT">Japanese Ministry of Education, Culture, Sports, Science and Technology</Agency>
+            </Grant>
+            <ProjectReleaseDate>2019-02-01T22:35:01Z</ProjectReleaseDate>
+            <Relevance>
+                <Environmental>yes</Environmental>
+            </Relevance>
+        </ProjectDescr>
+        <ProjectType>
+            <ProjectTypeSubmission>
+                <Target capture="eWhole" material="eGenome" sample_scope="eEnvironment">
+                    <Organism species="408170" taxID="408170">
+                        <OrganismName>human gut metagenome</OrganismName>
+                        <Supergroup>eOther</Supergroup>
+                    </Organism>
+                </Target>
+                <Method method_type="eSequencing"/>
+                <Objectives>
+                    <Data data_type="eRawSequenceReads"/>
+                </Objectives>
+                <ProjectDataTypeSet>
+                    <DataType>Metagenome</DataType>
+                </ProjectDataTypeSet>
+            </ProjectTypeSubmission>
+        </ProjectType>
+    </Project>
+    <Submission submitted="2015-08-20">
+        <Description>
+            <!-- Submitter information has been removed -->
+            <Organization role="owner" type="center">
+                <Name>Tokyo Institute of Technology</Name>
+                <!-- Contact information has been removed -->
+            </Organization>
+            <Organization role="participant" type="consortium" url="www.jchm.jp">
+                <Name>Japanese consortium for human microbiome</Name>
+            </Organization>
+            <Access>public</Access>
+        </Description>
+    </Submission>
+</DocumentSummary>
+
+</RecordSet>
