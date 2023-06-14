@@ -51,6 +51,15 @@ testdata/
     │   │       └── PRJDB4224.xml
 ```
 
+# X. Elasticsearchへの全長jsonlのbulk import
+Elasticsearchは100MBを超えるJSONファイルのbulk importができないため、このサイズを超えるデータは分割してインポートします。
+
+```
+mkdir bulk_import
+bash bin/split.sh #TODO:対象ファイルと出力先の修正
+curl -XDELETE http://localhost:9200/bioproject 
+bash bin/bulk_import.sh
+```
 
 ## Data model
 
