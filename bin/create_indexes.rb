@@ -59,6 +59,7 @@ input_dir =  File.join(root_dir,'project')
 
 File.open(index_project ,mode = "w") do |out_p|
     IO.foreach(out_path) do |line|
+      begin
         j = JSON.parse(line)
         if j['status'] == 'public'
             acc = j['identifier']
@@ -81,6 +82,10 @@ File.open(index_project ,mode = "w") do |out_p|
             next unless filter.key? j['index']['_id']
             out_p.puts j.to_json
         end
+      rescue => e
+        p e #=> RuntimeError
+        p j
+      end        
     end
 end
 print Time.now, " Finished\n"
