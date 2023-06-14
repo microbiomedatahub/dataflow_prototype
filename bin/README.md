@@ -20,3 +20,12 @@ bin/bioprojectxml2json.rb:11: warning: Ractor is experimental, and the behavior 
 ```
 
 
+# Elasticsearchへの全長jsonlのbulk import
+
+Elasticsearchは100MBを超えるJSONファイルのbulk importができないため、このサイズを超えるデータは分割してインポートします。
+
+- 分割作業用にjsonlをコピーします
+- cd bulk_import
+- source split.sh
+- curl -XDELETE http://localhost:9200/bioproject 
+- source bulk_import.sh
