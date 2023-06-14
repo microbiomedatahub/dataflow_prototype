@@ -1,4 +1,56 @@
-# dataflow_prototype
+# データの新規作成・更新手順
+
+## 新規作成
+### 1. git clone 
+```
+git clone git@github.com:microbiomedatahub/dataflow_prototype.git
+cd dataflow_prototype
+```
+
+### X. bioproject.xml取得
+最新のbioproject.xmlを取得します。
+`TBW`
+
+```
+curl https://ddbj.nig.ac.jp/public/ddbj_database/bioproject/bioproject.xml
+```
+
+### X. create_project_accessions.rb 
+Microbiome関連のbioproject IDリストを取得します。
+`TBW`
+
+### X. bioproject_mget.rb
+プロジェクト毎に各種データを取得します。
+`TBW`
+
+### X. create_indexes.rb
+Elasticsearch bulk APIで投入用のLine-delimited JSON形式ファイルを生成します。
+`TBW`
+
+- テストデータを利用した動作確認が可能です。
+```
+ruby bin/create_indexes.rb testdata
+```
+
+- 以下は、レポジトリにある取得済の入力データおよび出力データです。
+```
+testdata/
+├── bioproject.xml               ## 入力データ
+├── bioproject.json              ## 中間ファイル
+├── mdatahub_index_project.jsonl ## 生成インデックスデータ
+└── project
+    ├── PRJDB
+    │   ├── 004
+    │   │   ├── PRJDB004176
+    │   │   │   ├── PRJDB4176-biosampleset.xml ##入力データ
+    │   │   │   ├── PRJDB4176.dblink
+    │   │   │   └── PRJDB4176.xml
+    │   │   └── PRJDB004224
+    │   │       ├── PRJDB4224-biosampleset.xml ##入力データ
+    │   │       ├── PRJDB4224.dblink
+    │   │       └── PRJDB4224.xml
+```
+
 
 ## Data model
 
