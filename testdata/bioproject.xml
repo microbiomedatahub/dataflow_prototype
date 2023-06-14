@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PackageSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="file:Package.xsd">
+<Package>
+  <Project>
+    <Project>
+      <ProjectID>
+        <ArchiveID accession="PRJDB4176" archive="DDBJ" id="520750"/>
+      </ProjectID>
+      <ProjectDescr>
+        <Name>human gut metagenome</Name>
+        <Title>metagenomic data from human fecal samples</Title>
+        <Description>Total microbial community DNA was isolated from the fecal samples of Japanese patients who underwent colonoscopy at National Cancer Research Center. The study population contains health, early and advanced cancer stages.</Description>
+        <Grant GrantId="221S0002">
+          <Title>Genome Science</Title>
+          <Agency abbr="MEXT">Japanese Ministry of Education, Culture, Sports, Science and Technology</Agency>
+        </Grant>
+        <ProjectReleaseDate>2019-02-01T22:35:01Z</ProjectReleaseDate>
+        <Relevance>
+          <Environmental>yes</Environmental>
+        </Relevance>
+      </ProjectDescr>
+      <ProjectType>
+        <ProjectTypeSubmission>
+          <Target capture="eWhole" material="eGenome" sample_scope="eEnvironment">
+            <Organism species="408170" taxID="408170">
+              <OrganismName>human gut metagenome</OrganismName>
+              <Supergroup>eOther</Supergroup>
+            </Organism>
+          </Target>
+          <Method method_type="eSequencing"/>
+          <Objectives>
+            <Data data_type="eRawSequenceReads"/>
+          </Objectives>
+          <ProjectDataTypeSet>
+            <DataType>Metagenome</DataType>
+          </ProjectDataTypeSet>
+        </ProjectTypeSubmission>
+      </ProjectType>
+    </Project>
+    <Submission submitted="2015-08-20">
+      <Description>
+        <Organization role="owner" type="center">
+          <Name>Tokyo Institute of Technology</Name>
+        </Organization>
+        <Organization role="participant" type="consortium" url="www.jchm.jp">
+          <Name>Japanese consortium for human microbiome</Name>
+        </Organization>
+        <Access>public</Access>
+        <!--Submitter, contact information and comments have been removed-->
+      </Description>
+    </Submission>
+  </Project>
+</Package>
+<Package>
+  <Project>
+    <Project>
+      <ProjectID>
+        <ArchiveID accession="PRJDB4224" archive="DDBJ" id="407444"/>
+      </ProjectID>
+      <ProjectDescr>
+        <Name>soil metagenome</Name>
+        <Title>Microbial communities associated with natural and commercially grown rooibos (Aspalathus linearis) plants</Title>
+        <Description>The Cape Floristic Region has an exceptionally high floral diversity and is recognized as one of the world's biodiversity hotspots.  However, this region has a poor record of conservation and may endemic plant species are now classified as endangered.  One of the main threats to the region's ecosystem is the overexploitation of economically valuable plant species such as rooibos (Aspalathus linearis).  The aim of this study was to determine the microbial rhizosphere community structures of rooibos plants in natural and commercial areas.  Rhizosphere soil, root samples and bulk soil were collected from natural and commercial rooibs sites located on two different farms situated in the Cederberg area, the north-western region of the fynbos biome.</Description>
+        <ProjectReleaseDate>2017-09-14T22:01:39Z</ProjectReleaseDate>
+      </ProjectDescr>
+      <ProjectType>
+        <ProjectTypeSubmission>
+          <Target capture="eTargetedLocusLoci" material="ePartialGenome" sample_scope="eEnvironment">
+            <Organism species="410658" taxID="410658">
+              <OrganismName>soil metagenome</OrganismName>
+              <Supergroup>eOther</Supergroup>
+            </Organism>
+          </Target>
+          <Method method_type="eSequencing"/>
+          <Objectives>
+            <Data data_type="eRawSequenceReads"/>
+          </Objectives>
+          <ProjectDataTypeSet>
+            <DataType>Targeted Locus (Loci)</DataType>
+          </ProjectDataTypeSet>
+        </ProjectTypeSubmission>
+      </ProjectType>
+    </Project>
+    <Submission last_update="2017-09-15" submitted="2015-09-14">
+      <Description>
+        <Organization role="owner" type="center">
+          <Name>Stellenbosch University</Name>
+        </Organization>
+        <Access>public</Access>
+        <!--Submitter, contact information and comments have been removed-->
+      </Description>
+    </Submission>
+  </Project>
+</Package>
+</PackageSet>
