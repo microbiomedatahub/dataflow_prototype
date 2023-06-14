@@ -3,7 +3,8 @@
 HEAD="Content-Type:application/x-ndjson"
 URL="localhost:9200/_bulk"
 
-for i in bp_jsonl_part_*
+for i in `ls *`
 do
-        curl -s -H $HEAD -XPOST $URL --data-binary "@$i" > /mnt/sra/xml/logs/bp/$i
+	#echo "curl -s -H $HEAD -XPOST $URL --data-binary \"@$i\""
+        curl -s -H $HEAD -XPOST $URL --data-binary "@$i" > $i.logs
 done
