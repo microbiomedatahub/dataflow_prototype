@@ -1,0 +1,100 @@
+#!/usr/bin/env ruby
+
+require "fileutils"
+require 'pp'
+require 'uri'
+require 'open-uri'
+
+class AssemblyReports2RDF
+
+  attr_accessor :status
+
+  def initialize input,output 
+    @root_path = input 
+    @out_path  = output
+    @status = Hash.new{|h,k|h[k]=0}
+    #output_prefix f
+    @paths =[]
+    datasets.each do |key, dataset|
+      @source = dataset[:source]
+      @idtype = dataset[:idtype]
+      @reports =[]
+      @out_summary=dataset[:outpath]
+      parse_summary "#{@root_path}/#{dataset[:path]}"
+    end
+    @paths.each do |path|
+       output_each_assembly path
+    end
+  end
+
+  def datasets
+     {:insdc =>
+         { name: 'INSDC',
+           path: 'genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt',
+           outpath: 'genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.ttl',
+           source: 'assembly_summary_genbank.txt',
+           idtype: 'insdc'
+         },
+      :refseq =>
+         { name: 'RefSeq',
+           path: 'genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt',
+           outpath: 'genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.ttl',
+           source: 'assembly_summary_refseq.txt',
+           idtype: 'refseq'
+         }
+     }
+  end
+
+  def parse_summary file_path 
+
+    out_file = "#{@out_path}/#{@out_summary}"
+    out_dir  = File.dirname(out_file)
+    FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir)
+    #puts out_file
+#    File.open(out_file,"w") do |f| 
+      head = []
+      File.readlines("#{file_path}",:encoding =>'UTF-8').each_with_index do |line,i|
+        if i == 0  # description row
+        elsif i == 1
+          head =line.strip.gsub("\r","").gsub(/^#/,"").strip.split("\t")
+        else
+          project =  head.zip(line.strip.split("\t")).inject({}){|h,col| h[col[0]]=col[1];h}
+          next unless project['excluded_from_refseq'].match("derived from metagenome")
+          basename = File.basename(URI.parse(project['ftp_path']).path)
+          genomic_fna =  [project['ftp_path'], "#{basename}_genomic.fna.gz" ].join('/')
+          genomic_fna_out = [out_dir, "#{basename}_genomic.fna.gz" ].join('/')
+
+          require 'open-uri'
+
+          genomic_fna_path = "#{@out_path}/#{URI.parse(genomic_fna).path}"
+          sample_xml_path = "#{@out_path}/#{URI.parse(genomic_fna).path}"
+          
+          out_dir  = File.dirname(genomic_fna_path)
+          #pp sample_xml = [out_dir, "#{basename}-biosample.xml" ].join('/')
+          sample_xml = [out_dir, "#{project['biosample']}.xml" ].join('/')
+          #pp out_dir
+          FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir) 
+          #puts genomic_fna_out
+          #pp project['biosample']
+          #system("efetch -db biosample -id #{project['biosample']} -mode xml > #{}")
+          unless FileTest.exist?(sample_xml)
+            puts sample_xml
+            system("efetch -db biosample -id #{project['biosample']} -mode xml > #{sample_xml}")
+#         unless FileTest.exist?(genomic_fna_path)
+#           puts genomic_fna_path
+#           URI.open(genomic_fna) do |res|
+#                IO.copy_stream(res, genomic_fna_path)
+#            end
+          end
+        end
+      end
+#    end
+  end
+end
+
+input = ARGV.shift
+output= ARGV.shift
+
+AssemblyReports2RDF.new(input,output)
+
+
