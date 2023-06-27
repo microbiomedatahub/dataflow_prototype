@@ -4,6 +4,7 @@ require "fileutils"
 require 'pp'
 require 'uri'
 require 'open-uri'
+require_relative 'mdatahub.rb'
 
 class AssemblyReports2RDF
 
@@ -51,7 +52,9 @@ class AssemblyReports2RDF
     out_dir  = File.dirname(out_file)
     FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir)
     #puts out_file
-#    File.open(out_file,"w") do |f| 
+    index_genome = File.join("/tmp",'mdatahub_index_genome.jsonl')
+    #input_dir =  File.join(root_dir,'genome')
+    File.open(index_genome ,mode = "w") do |out_p|
       head = []
       File.readlines("#{file_path}",:encoding =>'UTF-8').each_with_index do |line,i|
         if i == 0  # description row
@@ -68,27 +71,64 @@ class AssemblyReports2RDF
 
           genomic_fna_path = "#{@out_path}/#{URI.parse(genomic_fna).path}"
           sample_xml_path = "#{@out_path}/#{URI.parse(genomic_fna).path}"
-          
+          #j= project
+          j= {
+            "type"=> "genome",
+            "identifier"=> project['assembly_accession'],
+            "organism"=> project['organism_name'],
+            "title"=> project['organism_name'],
+            "description"=> project['excluded_from_refseq'],
+            "data type"=> "Genome sequencing and assembly",
+            "organization"=> project['submitter'],
+            "publication"=> [
+            {
+            #"id": "35715423",
+            #"Title": "The OceanDNA MAG catalog contains over 50,000 prokaryotic genomes originated from various marine environments."
+            }
+            ],
+            "properties"=> project,
+            "dbXrefs"=> [],
+            "distribution"=> nil,
+            "Download"=> nil,
+            "status"=> "public",
+            "visibility"=> nil,
+            "dateCreated"=> nil,
+            "dateModified"=> nil,
+            "datePublished"=> project['seq_rel_date'].gsub('/','-'),
+            "_annotation"=> {},
+            "data_type"=> "low-quality MAG",
+            "data_source"=> "INSDC"
+          }
+          #j['properties'] = project
           out_dir  = File.dirname(genomic_fna_path)
           #pp sample_xml = [out_dir, "#{basename}-biosample.xml" ].join('/')
           sample_xml = [out_dir, "#{project['biosample']}.xml" ].join('/')
           #pp out_dir
           FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir) 
-          #puts genomic_fna_out
-          #pp project['biosample']
-          #system("efetch -db biosample -id #{project['biosample']} -mode xml > #{}")
           unless FileTest.exist?(sample_xml)
             puts sample_xml
             system("efetch -db biosample -id #{project['biosample']} -mode xml > #{sample_xml}")
-#         unless FileTest.exist?(genomic_fna_path)
-#           puts genomic_fna_path
-#           URI.open(genomic_fna) do |res|
-#                IO.copy_stream(res, genomic_fna_path)
-#            end
           end
+          if File.exist? sample_xml
+            bss = BioSampleSet.new(sample_xml)
+            ann = bss.to_json_plus
+            j['_annotation'] = ann
+          else
+            j['_annotation'] = BioSampleSet.new.json_plus_default
+          end
+          genome_count = 1        #FIXME: genome stats.
+          has_analysis = false    #FIXME  genome stats.
+          j['_annotation']['completeness']= 0
+          j['_annotation']['contamination']= 0
+          j['_annotation']['strain_heterogeneity']= 0
+          j['_annotation']['genome_count'] = genome_count
+          j['has_analysis'] = has_analysis
+          puts JSON.pretty_generate(j)
+          out_p.puts j.to_json
+          #end
         end
       end
-#    end
+    end
   end
 end
 
