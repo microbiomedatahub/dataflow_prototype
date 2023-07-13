@@ -29,3 +29,17 @@ Elasticsearchは100MBを超えるJSONファイルのbulk importができない�
 - source split.sh
 - curl -XDELETE http://localhost:9200/bioproject 
 - source bulk_import.sh
+
+# メタゲノム解析の系統組成データをplotly JSONに変換する
+
+- Runごとの系統組成データ（例 ERR0000_1.fastq.sam.mapped..）の配置されたディレクトリを指定しBioProjectごとにPlotlyのstacked chartに読み込むJSONデータを書き出します。
+- チャートのx軸はRunからBioSapleに変換したIDが利用されます。同じBioSampleがサンプルに割り当てられた場合、サンプル名にチャート内indexを表すsuffixが振られます。
+- RunからBioProjectへの変換、RunからBioSampleへの変換はTogoIDを利用しています。
+- 入力ファイルパス,出力ファイルパスはコマンドラインoption -i, -oで指定。出力ファイルのパスは省略可能。省略した場合入力ファイルと同じディレクトリにプロジェクト毎ディレクトリが作られる。
+
+## 使い方
+
+ ```
+$ python tsv2plotlyjson.py -i 入力ファイルのパス -o 出力パス
+
+ ```
