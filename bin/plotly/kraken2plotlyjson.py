@@ -2,35 +2,59 @@
 import pandas as pd
 import csv
 from typing import List
+import plotly.express as px
 
 # kraken2 reportのヘッダ
 headers = ['count', 'superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain'
            'filename', 'sig_name', 'sig_md5', 'total_counts']
+test_sample_name = ["sample1", "sample2","sample3"]
 
 
-def plotlyjson_formatter(d: pd.DataFrame, rank: str) -> dict:
+def plotlyjson_formatter(d: pd.DataFrame, filenname:str, rank: str) -> dict:
     """
     DFをplotly用のjsonに変換する
     :return:
     """
     # Todo: DFをplotly用のjsonに変換する
-    pass
+    colors = px.colors.qualitative.T10
+    # plotly
+    fig = px.bar(d,
+                 x=d.index,
+                 y=[c for c in d.columns],
+                 template='ggplot2',
+                 color_discrete_sequence=colors
+                 )
+
+    fig.update_layout(
+        title='Phlogenetic compositions',
+        xaxis_title="Samples",
+        yaxis_title="Composition(%)",
+        legend_title=rank,
+        font=dict(
+            family="sans-serif",
+            size=12,
+        )
+    )
+    #fig.show()
+    fig.write_json(filenname, pretty=True)
 
 
-def list2df(lst: List[list], rank:str) -> pd.DataFrame:
+def list2df(lst: List[list], rank:str, sample_name) -> pd.DataFrame:
     """
     [[taxonomy name, count],,]形式のlistを
     plotly用にサンプルをconcatする直前までの整形したDataFrameに変換する。
     :param lst:
     :return:
     """
-    df = pd.DataFrame(lst)
-    # 先頭行をカラム名にする.ヘッダを設定しヘッダ行を削除する
-    df.columns = df.iloc[0]
+    df = pd.DataFrame(lst, columns=[rank, sample_name])
+
+    # ヘッダ行を削除する
     df = df[1:]
-    # rank名のカラムをインデックスにする
+
+    # rankのカラムをインデックスとする
     df = df.set_index(rank, drop=True)
-    # DFを天地する
+    print(df)
+    # DFを天地し行指向にデータを追加できるフォーマットに変換する
     df = df.T
     # カラムの値をカラムの合計値で割り%を算出する
     df = df.div(df.sum(axis=1), axis=0).mul(100)
@@ -87,22 +111,28 @@ def concat_samples(df_lst: List[pd.DataFrame]) -> pd.DataFrame:
     df_all.fillna(0, inplace=True)
     # 列ごとに合計値を算出しサンプル毎の合計値でDFをソートする
     s = df_all.sum()
-    df_all_sorted = df_all[s.sort_values(ascending=False).index[:]]
-    return df_all_sorted
+    d = df_all[s.sort_values(ascending=False).index[:]]
+    return d
 
 
 def main():
     test_reports = ["/Users/oec/Desktop/data/MDB/kraken2report_sample/out100.csv",
-                    "/Users/oec/Desktop/data/MDB/kraken2report_sample/out100_copy1.csv"]
+                    "/Users/oec/Desktop/data/MDB/kraken2report_sample/out100_copy1.csv",
+                    "/Users/oec/Desktop/data/MDB/kraken2report_sample/out100_copy2.csv"]
     # Todo: 開発上speciesでテストするが、s,g,f,oでDFをつくりJSONを書き出す
     rank = "species"
+    name = "test_file.json"
     dfs = []
     for i,f in enumerate(test_reports):
         lst = read_kraken2report(f)
         lst_species = select_by_rank(lst, "species")
-        dfs.append(list2df(lst_species, rank))
-    df = concat_samples(dfs)
-    dct = plotlyjson_formatter(df, rank)
+        # Todo: sample nameは固定のリストでテスト的につけているがファイル名より変換した値になるはず
+        dfs.append(list2df(lst_species, rank, test_sample_name[i]))
+    print(dfs[0])
+    df_con = concat_samples(dfs)
+    # print(df)
+    # Todo: plotlyのXY軸がなぜか逆になっている。カラムのインデックスがなぜかついているので修正する
+    plotlyjson_formatter(df_con, name, rank)
 
 
 if __name__ == "__main__":
