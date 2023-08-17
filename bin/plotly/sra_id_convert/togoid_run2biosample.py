@@ -15,6 +15,7 @@ def run_biosample(run: list) -> dict:
     """
     ids = ','.join(run)
     url = 'https://api.togoid.dbcls.jp/convert?ids={ids}&route=sra_run%2Cbiosample&report=pair&format=json&limit=1000&offset=0'.format(ids=ids)
+    print(url)
     res = urllib.request.urlopen(url)
     json_data = res.read().decode('utf-8')
     run_bs = json.loads(json_data)

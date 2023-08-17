@@ -1,14 +1,34 @@
 # encoding: utf-8
 import pandas as pd
+import numpy as np
 import csv
+import os
+import glob
 from typing import List
 import plotly.express as px
+import argparse
+import re
+
+from sra_id_convert import togoid_run2biosample, togoid_run2bioproject
+
+# 入力ファイルパス,出力ファイルパスはコマンドラインoption -i, -oで指定する
+# cwd = os.getcwd()
+parser = argparse.ArgumentParser()
+parser.add_argument('-i', '--input', type=str, required=True)
+parser.add_argument('-o', '--output', type=str)
+# krakin2形式ファイルの拡張子を指定する。デフォルトはcsv
+parser.add_argument('-e', '--extension', type=str, default='csv')
+args = parser.parse_args()
+input_path = args.input
+file_extension = args.extension
+if args.output is None:
+    output_path = input_path
+else:
+    output_path = args.output
 
 # kraken2 reportのヘッダ
 headers = ['count', 'superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain'
            'filename', 'sig_name', 'sig_md5', 'total_counts']
-test_sample_name = ["sample1", "sample2","sample3"]
-
 
 def plotlyjson_formatter(d: pd.DataFrame, filenname:str, rank: str) -> dict:
     """
@@ -18,18 +38,20 @@ def plotlyjson_formatter(d: pd.DataFrame, filenname:str, rank: str) -> dict:
     # Todo: DFをplotly用のjsonに変換する
     colors = px.colors.qualitative.T10
     # plotly
-    fig = px.bar(d,
-                 x=d.index,
-                 y=[c for c in d.columns],
-                 template='ggplot2',
-                 color_discrete_sequence=colors
-                 )
+    
+    #df = df.astype({'count': 'int64'})
+    fig = px.bar(d, 
+                x = d.index,
+                y = [c for c in d.columns],
+                template = 'ggplot2',
+                color_discrete_sequence = colors
+                )
 
     fig.update_layout(
-        title='Phlogenetic compositions',
+    title = 'Phlogenetic compositions', 
         xaxis_title="Samples",
         yaxis_title="Composition(%)",
-        legend_title=rank,
+        legend_title="Genus",
         font=dict(
             family="sans-serif",
             size=12,
@@ -50,10 +72,10 @@ def list2df(lst: List[list], rank:str, sample_name) -> pd.DataFrame:
 
     # ヘッダ行を削除する
     df = df[1:]
+    df[sample_name] = df[sample_name].astype(int)
 
     # rankのカラムをインデックスとする
     df = df.set_index(rank, drop=True)
-    print(df)
     # DFを天地し行指向にデータを追加できるフォーマットに変換する
     df = df.T
     # カラムの値をカラムの合計値で割り%を算出する
@@ -115,24 +137,71 @@ def concat_samples(df_lst: List[pd.DataFrame]) -> pd.DataFrame:
     return d
 
 
+def get_file_names(input_path) -> list:
+    """_summary_
+    指定したディレクトリ以下のファイル名を取得する
+    Args:
+        input_path (_type_): _description_
+    Returns:
+        list: ディレクトリに含まれる全tsvファイルのリスト
+    """
+    file_names = glob.glob(input_path + '/*.' + file_extension)
+    return file_names
+
+
+def get_run_id(file_name) -> str:
+    """_summary_
+    ファイル名からrun_idを取得する。
+    想定するファイル名はrun id + _n.fastq.sam.mapped.bam...txtのような文字列なので
+    ファイル名先頭のアルファベット＋数字分部分を利用する。
+        file_name (_type_): _description_
+    Returns:
+        str: run_id
+    """
+    run_id = re.findall(r'^[a-zA-Z0-9]+', file_name)
+    return run_id[0]
+
+
 def main():
-    test_reports = ["/Users/oec/Desktop/data/MDB/kraken2report_sample/out100.csv",
-                    "/Users/oec/Desktop/data/MDB/kraken2report_sample/out100_copy1.csv",
-                    "/Users/oec/Desktop/data/MDB/kraken2report_sample/out100_copy2.csv"]
+    """__summary__
+    - kraken2 report形式のファイルを読み込み、plotly用のjsonを書き出す
+    - ファイル名の先頭にRUN IDつくので、このIDをBioProjectに変換してプロジェクトごとのjsonを書き出す
+    - 各ファイルが一つのRUNの解析に相当するが、RUNをBioSampleに変換してbarchartのサンプル名として表示する
+    """
+    # 下記ディレクトリに含まれるファイル名はID変換のテスト用につけたものでで実際のサンプルとは異なる
+    file_names = get_file_names(input_path)
+    file_names = [f.split("/")[-1] for f in file_names if f.endswith(file_extension)]
+    run_list = []
+    for file_name in file_names:
+        # Todo: file_nameはパス名を含むので、パス名を除いたファイル名のみを取得する
+        run_id = get_run_id(file_name)
+        run_list.append(run_id)
+    # run-bioprojectの関係リストを取得
+    run_bp_list = togoid_run2bioproject.run_bioproject(run_list)
+    # bioprojectでrun idをグループ化
+    bp_nested_list = togoid_run2bioproject.convert_nested_bioproject_list(run_bp_list)
+    # bioproject毎に組成データを読み込む（ネストしたそれぞれのリスト（run）に先頭の文字列が一致するファイルリストを作りファイルを読み込む）
     # Todo: 開発上speciesでテストするが、s,g,f,oでDFをつくりJSONを書き出す
-    rank = "species"
-    name = "test_file.json"
-    dfs = []
-    for i,f in enumerate(test_reports):
-        lst = read_kraken2report(f)
-        lst_species = select_by_rank(lst, "species")
-        # Todo: sample nameは固定のリストでテスト的につけているがファイル名より変換した値になるはず
-        dfs.append(list2df(lst_species, rank, test_sample_name[i]))
-    print(dfs[0])
-    df_con = concat_samples(dfs)
-    # print(df)
-    # Todo: plotlyのXY軸がなぜか逆になっている。カラムのインデックスがなぜかついているので修正する
-    plotlyjson_formatter(df_con, name, rank)
+    for k, v in bp_nested_list.items():
+        # k: bioproject, v: run_id list
+        # run idでfile_namesをフィルタリング（先頭の文字列がrun_id listに含まれるファイル名を取得）
+        filtered_file_names = [f for f in file_names if f.startswith(tuple(v))]
+        # run idからrun:biosampleの辞書を作成
+        run_list = [f.split("_")[0] for f in filtered_file_names]
+        sample_names = togoid_run2biosample.run_biosample(run_list)
+        # Todo: rankを固定しているが、s,g,f,oでそれぞれDFをつくりJSONを書き出す
+        rank = "species"
+        name = k  + "_" + rank + ".json"
+        dfs = []
+        for i,f in enumerate(filtered_file_names):
+            # kraken2形式のファイルを読み込み、組成テーブルを2Dリストとして取得する
+            lst = read_kraken2report(input_path + "/" + f)
+            lst_species = select_by_rank(lst, rank)
+            sample_name = sample_names[run_list[i]]
+            dfs.append(list2df(lst_species, rank, sample_name))
+        df_con = concat_samples(dfs)
+        # テスト用にコメントアウト
+        plotlyjson_formatter(df_con, name, rank)
 
 
 if __name__ == "__main__":

@@ -59,11 +59,14 @@ def create_df(file_name: list) -> pd.DataFrame:
         run_id = d.split('_')[0]
         bs = biosample_ids[run_id]
         df[i] = pd.read_table(f"{input_path}/{d}", names=['genus',bs])
+
         # インデックス設定
         df[i] = df[i].set_index('genus', drop=True)
 
         # 天地
         df[i] = df[i].T
+        print("dtypes: ", df[i].dtypes)
+        #print(df[i].head())
         # リード数をトータル100としてレコード毎各サンプルの値を正規化する
         df[i] = df[i].div(df[i].sum(axis=1), axis=0).mul(100)
         df_lst.append(df[i])
@@ -97,8 +100,10 @@ def create_plot_json(bioproject:str, file_names:list):
         file_names (_type_): ファイル名リスト
     """
     d = create_df(file_names)
+
     colors = px.colors.qualitative.T10
     # plotly
+
     fig = px.bar(d, 
                 x = d.index,
                 y = [c for c in d.columns],
@@ -117,14 +122,19 @@ def create_plot_json(bioproject:str, file_names:list):
         )
     )
     # fig.show()は実行しなくても影響ない
-    # fig.show()
+    #fig.show()
     # bioprojectディレクトリを作成
+    # テスト用にコメントアウト
+    """
     path = output_path + f"/{bioproject}"
-    os.mkdir(path)
+    try:
+        os.mkdir(path)
+    except FileExistsError:
+        print('bioproject directory already exists')
 
     # jsonファイルに書き出し
     fig.write_json(f"{output_path}/{bioproject}/analysis.json", pretty=True)
-
+    """
 
 def main() -> None:
     """
@@ -154,6 +164,7 @@ def main() -> None:
         filtered_file_names = [f for f in file_names if f.startswith(tuple(v))]
         # plotlyjsonを生成しファイル出力（BioProjectをファイル名にしてディレクトリを作りディレクトリに設置）
         create_plot_json(k, filtered_file_names)
+        break
 
 
 if __name__ == '__main__':
