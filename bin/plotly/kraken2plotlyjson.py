@@ -29,6 +29,8 @@ else:
 # kraken2 reportのヘッダ
 headers = ['count', 'superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain'
            'filename', 'sig_name', 'sig_md5', 'total_counts']
+# 出力する階級をリストで指定
+ranks = ["order", "family", "genus", "species"]
 
 def plotlyjson_formatter(d: pd.DataFrame, filenname:str, rank: str) -> dict:
     """
@@ -58,7 +60,8 @@ def plotlyjson_formatter(d: pd.DataFrame, filenname:str, rank: str) -> dict:
         )
     )
     #fig.show()
-    fig.write_json(filenname, pretty=True)
+    # fig.write_json(filenname, pretty=True)
+    export2jsonfile(fig,filenname, rank)
 
 
 def list2df(lst: List[list], rank:str, sample_name) -> pd.DataFrame:
@@ -162,6 +165,21 @@ def get_run_id(file_name) -> str:
     return run_id[0]
 
 
+def export2jsonfile(fig:px.bar, bioproject:str, rank:str):
+    """_summary_
+    - プロジェクト毎にまとめたplotly用系統組成をJSONファイルを書き出す
+    - プロジェクト名のディレクトリを作成しそのディレクトリに各ランクのファイルを配置する
+    """
+    path = f"{output_path}/{bioproject}"
+    # プロジェクト名のディレクトリを作成する
+    try:
+        os.mkdir(path)
+    except FileExistsError:
+        pass
+    # jsonファイルに書き出し
+    fig.write_json(f"{path}/analysis_{rank}.json", pretty=True)
+
+
 def main():
     """__summary__
     - kraken2 report形式のファイルを読み込み、plotly用のjsonを書き出す
@@ -189,19 +207,16 @@ def main():
         # run idからrun:biosampleの辞書を作成
         run_list = [f.split("_")[0] for f in filtered_file_names]
         sample_names = togoid_run2biosample.run_biosample(run_list)
-        # Todo: rankを固定しているが、s,g,f,oでそれぞれDFをつくりJSONを書き出す
-        rank = "species"
-        name = k  + "_" + rank + ".json"
-        dfs = []
-        for i,f in enumerate(filtered_file_names):
-            # kraken2形式のファイルを読み込み、組成テーブルを2Dリストとして取得する
-            lst = read_kraken2report(input_path + "/" + f)
-            lst_species = select_by_rank(lst, rank)
-            sample_name = sample_names[run_list[i]]
-            dfs.append(list2df(lst_species, rank, sample_name))
-        df_con = concat_samples(dfs)
-        # テスト用にコメントアウト
-        plotlyjson_formatter(df_con, name, rank)
+        for rank in ranks:
+            dfs = []
+            for i,f in enumerate(filtered_file_names):
+                # kraken2形式のファイルを読み込み、組成テーブルを2Dリストとして取得する
+                lst = read_kraken2report(input_path + "/" + f)
+                lst_species = select_by_rank(lst, rank)
+                sample_name = sample_names[run_list[i]]
+                dfs.append(list2df(lst_species, rank, sample_name))
+            df_con = concat_samples(dfs)
+            plotlyjson_formatter(df_con, k, rank)
 
 
 if __name__ == "__main__":

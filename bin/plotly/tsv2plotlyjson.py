@@ -124,8 +124,6 @@ def create_plot_json(bioproject:str, file_names:list):
     # fig.show()は実行しなくても影響ない
     #fig.show()
     # bioprojectディレクトリを作成
-    # テスト用にコメントアウト
-    """
     path = output_path + f"/{bioproject}"
     try:
         os.mkdir(path)
@@ -134,7 +132,7 @@ def create_plot_json(bioproject:str, file_names:list):
 
     # jsonファイルに書き出し
     fig.write_json(f"{output_path}/{bioproject}/analysis.json", pretty=True)
-    """
+
 
 def main() -> None:
     """
