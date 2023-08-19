@@ -31,8 +31,22 @@ $ pip install -r requirements.txt
 ## plotly用JSONファイルの出力
 
 ```
-$ python kraken2plotlyjson.py -i <入力するファイルを配置したディレクトリのパス>
+$ python kraken2plotlyjson.py -i <入力するファイルを配置したディレクトリのパス> [-o 出力するディレクトリのパス]
 
+```
+
+JSONはプロジェクト名のディレクトリに階級ごと（現在order, family, genus, speciesを設定している）書き出される。
+```
+├── PRJEB1786
+│   ├── analysis_family.json
+│   ├── analysis_genus.json
+│   ├── analysis_order.json
+│   └── analysis_species.json
+├── PRJNA217052
+│   ├── analysis_family.json
+│   ├── analysis_genus.json
+│   ├── analysis_order.json
+│   └── analysis_species.json
 ```
 
 ## pltlyを利用した積み上げバーチャートの表示
