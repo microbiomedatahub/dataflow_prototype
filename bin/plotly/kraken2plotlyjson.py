@@ -10,11 +10,16 @@ import argparse
 import re
 
 from sra_id_convert import togoid_run2biosample, togoid_run2bioproject
+# デフォルトの出力パスの共通部分
+output_path = "/work1/mdatahub/public/project"
 
 # 入力ファイルパス,出力ファイルパスはコマンドラインoption -i, -oで指定する
 # cwd = os.getcwd()
 parser = argparse.ArgumentParser()
+# --inputオプションはソースファイルを納めたディレクトリを指定する
 parser.add_argument('-i', '--input', type=str, required=True)
+# --outputオプションはJSONを書き出すディレクトリの共通部分を指定する.プロジェクトの個別のURLは
+# プロジェクト名から自動的にスクリプト内で作成する
 parser.add_argument('-o', '--output', type=str)
 # krakin2形式ファイルの拡張子を指定する。デフォルトはcsv
 parser.add_argument('-e', '--extension', type=str, default='csv')
@@ -22,7 +27,7 @@ args = parser.parse_args()
 input_path = args.input
 file_extension = args.extension
 if args.output is None:
-    output_path = input_path
+    output_path = output_path
 else:
     output_path = args.output
 
@@ -170,14 +175,30 @@ def export2jsonfile(fig:px.bar, bioproject:str, rank:str):
     - プロジェクト毎にまとめたplotly用系統組成をJSONファイルを書き出す
     - プロジェクト名のディレクトリを作成しそのディレクトリに各ランクのファイルを配置する
     """
-    path = f"{output_path}/{bioproject}"
     # プロジェクト名のディレクトリを作成する
     try:
         os.mkdir(path)
     except FileExistsError:
         pass
     # jsonファイルに書き出し
+    path = acc2path(bioproject)
     fig.write_json(f"{path}/analysis_{rank}.json", pretty=True)
+
+
+def acc2path(acc:str) -> str:
+    """_summary_
+    BioProjectのIDを受け取り、数字部分を6桁に０埋めしたプロジェクトのファイルパスを返す
+    Args:
+        acc (str): BioProject ID
+    Returns:
+        path(str): 個別のファイルパスパス
+    """
+    m = re.match(r"^(PRJ[A-Z]+)([0-9]+)$", acc)
+    acc_prefix = m[1]
+    acc_num = m[2]
+    dir_name = acc_num.zfill(6)
+    path = f"{output_path}/{acc_prefix}/{dir_name[0:3]}/{acc_prefix}{dir_name}"
+    return path
 
 
 def main():
