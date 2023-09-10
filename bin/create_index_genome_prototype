@@ -5,8 +5,10 @@ require 'pp'
 require 'uri'
 require 'open-uri'
 require_relative 'mdatahub.rb'
+require "date"
+require "json"
 
-class AssemblyReports2RDF
+class AssemblyReports
 
   attr_accessor :status
 
@@ -14,108 +16,62 @@ class AssemblyReports2RDF
     @root_path = input 
     @out_path  = output
     @status = Hash.new{|h,k|h[k]=0}
-    #output_prefix f
-    @paths =[]
-    datasets.each do |key, dataset|
-      #pp dataset
-      next unless dataset[:name] == 'INSDC'
-      @source = dataset[:source]
-      @idtype = dataset[:idtype]
-      @reports =[]
-      @out_summary=dataset[:outpath]
-      parse_summary "#{@root_path}/#{dataset[:path]}"
-    end
-    @paths.each do |path|
-       output_each_assembly path
-    end
+    #@paths =[]
+    @source = 'assembly_summary_genbank.txt'
+    @idtype = 'insdc'
+    @reports =[]
+    parse_summary "#{@root_path}/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
   end
 
-  def datasets
-     {:insdc =>
-         { name: 'INSDC',
-           path: 'genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt',
-           outpath: 'genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.ttl',
-           source: 'assembly_summary_genbank.txt',
-           idtype: 'insdc'
-         },
-      :refseq =>
-         { name: 'RefSeq',
-           path: 'genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt',
-           outpath: 'genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.ttl',
-           source: 'assembly_summary_refseq.txt',
-           idtype: 'refseq'
-         }
-     }
+  def output_file_path
+    d = Date.today
+    today = d.strftime("%Y%m%d")
+    File.join(@out_path,"mdatahub_index_genome-#{today}.jsonl")
   end
+
 
   def parse_summary file_path 
-
-    out_file = "#{@out_path}/#{@out_summary}"
-    out_dir  = File.dirname(out_file)
-    FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir)
-    #puts out_file
-    index_genome = File.join(@out_path,'mdatahub_index_genome.jsonl')
-    #input_dir =  File.join(root_dir,'genome')
-    File.open(index_genome ,mode = "w") do |out_p|
+    File.open(output_file_path ,mode = "w") do |out_p|
       head = []
       File.readlines("#{file_path}",:encoding =>'UTF-8').each_with_index do |line,i|
         if i == 0  # description row
         elsif i == 1
           head =line.strip.gsub("\r","").gsub(/^#/,"").strip.split("\t")
         else
-          project =  head.zip(line.strip.split("\t")).inject({}){|h,col| h[col[0]]=col[1];h}
-          #pp line
-          #warn project['assembly_accession']
-          #warn project['excluded_from_refseq']
-          #next if project['excluded_from_refseq'].nil? #TODO
-          next unless project['excluded_from_refseq'].match("derived from metagenome")
-          basename = File.basename(URI.parse(project['ftp_path']).path)
-          genomic_fna =  [project['ftp_path'], "#{basename}_genomic.fna.gz" ].join('/')
-          genomic_fna_out = [out_dir, "#{basename}_genomic.fna.gz" ].join('/')
+          row =  head.zip(line.strip.split("\t")).inject({}){|h,col| h[col[0]]=col[1];h}
+          next unless row['excluded_from_refseq'].match("derived from metagenome")
+          #warn row['assembly_accession']
+          #warn row['excluded_from_refseq']
+          #next if row['excluded_from_refseq'].nil? #TODO
+          #basename = File.basename(URI.parse(row['ftp_path']).path)
 
-          require 'open-uri'
-
-          genomic_fna_path = "#{@out_path}/#{URI.parse(genomic_fna).path}"
-          sample_xml_path = "#{@out_path}/#{URI.parse(genomic_fna).path}"
-          #warn project['assembly_accession']
-          #j= project
           j= {
             "type"=> "genome",
-            "identifier"=> project['assembly_accession'],
-            "organism"=> project['organism_name'],
-            "title"=> project['organism_name'],
-            "description"=> project['excluded_from_refseq'],
+            "identifier"=> row['assembly_accession'],
+            "organism"=> row['organism_name'],
+            "title"=> row['organism_name'],
+            "description"=> row['excluded_from_refseq'],
             "data type"=> "Genome sequencing and assembly",
-            "organization"=> project['submitter'],
-            "publication"=> [
-            {
-            #"id": "35715423",
-            #"Title": "The OceanDNA MAG catalog contains over 50,000 prokaryotic genomes originated from various marine environments."
-            }
-            ],
-            "properties"=> project,
+            "organization"=> row['submitter'],
+            "publication"=> [ { } ],
+            "properties"=> row,
             "dbXrefs"=> [],
             "distribution"=> nil,
             "Download"=> nil,
             "status"=> "public",
             "visibility"=> nil,
-            "dateCreated"=> project['seq_rel_date'].gsub('/','-'), #nil,
-            "dateModified"=> project['seq_rel_date'].gsub('/','-'), #nil,
-            "datePublished"=> project['seq_rel_date'].gsub('/','-'),
+            "dateCreated"=> row['seq_rel_date'].gsub('/','-'), #nil,
+            "dateModified"=> row['seq_rel_date'].gsub('/','-'), #nil,
+            "datePublished"=> row['seq_rel_date'].gsub('/','-'),
             "_annotation"=> {},
             "data_type"=> "low-quality MAG",
             "data_source"=> "INSDC"
           }
-          #j['properties'] = project
-          out_dir  = File.dirname(genomic_fna_path)
-          #pp sample_xml = [out_dir, "#{basename}-biosample.xml" ].join('/')
-          sample_xml = [out_dir, "#{project['biosample']}.xml" ].join('/')
-          #pp out_dir
-          FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir) 
-#          unless FileTest.exist?(sample_xml)
-#            puts sample_xml
-#            system("efetch -db biosample -id #{project['biosample']} -mode xml > #{sample_xml}")
-#          end
+          asm_path = asm_acc2path row['assembly_accession']
+
+          ###
+          ### BioSample.xmlからメタデータ取得
+          sample_xml = ['/work1/mdatahub/public/genome', asm_path, row['assembly_accession'], "#{row['biosample']}.xml" ].join('/')
           if File.exist? sample_xml
             bss = BioSampleSet.new(sample_xml)
             ann = bss.to_json_plus
@@ -123,19 +79,75 @@ class AssemblyReports2RDF
           else
             j['_annotation'] = BioSampleSet.new.json_plus_default
           end
+
+          ###
+          ### DFAST結果から取得
+          input_dfast = File.join('/work1/mdatahub/public/genome', asm_path, row['assembly_accession'],'dfast/statistics.txt')
+          #parse_dfast_statistics input_dfast
+          require "csv"
+          if File.exist? input_dfast
+            df = CSV.read(input_dfast, col_sep: "\t", headers: false)
+            df_h = Hash[*df.flatten]
+            j['_dfast'] = df_h
+            j['has_analysis'] = true
+          else
+            j['_dfast'] = {}
+            j['has_analysis'] = false
+          end
+
+          ### DFASTQC結果から取得
+          input_dfastqc = File.join('/work1/mdatahub/public/genome', asm_path, row['assembly_accession'],'dfastqc/dqc_result.json')
+          if File.exist? input_dfastqc
+            File.open(input_dfastqc) do |f|
+             dqc = JSON.load(f)
+             j['_dfastqc'] = dqc
+          j['_annotation']['completeness']=  j['_dfastqc']['cc_result']['completeness'] || 0
+          j['_annotation']['contamination']= j['_dfastqc']['cc_result']['contamination'] || 0
+          j['_annotation']['strain_heterogeneity']= j['_dfastqc']['cc_result']['strain_heterogeneity'] || 0
+            end
+          else
+            j['_dfastqc'] = {}
+          j['_annotation']['completeness']=  0
+          j['_annotation']['contamination']= 0
+          j['_annotation']['strain_heterogeneity']= 0
+          end
+
+          ### 配列ファイルから取得
+          seq_file_path = File.join('/work1/mdatahub/public/genome', asm_path, row['assembly_accession'],'genome.fna.gz')
+          size = File.size(seq_file_path)
+          mb_size = (size.to_f/(1024.0 * 1024.0)).round(3)
+          if File.exist? seq_file_path
+            j['_annotation']['data_size'] = "#{mb_size} MB"
+          end
+
           genome_count = 1        #FIXME: genome stats.
           has_analysis = false    #FIXME  genome stats.
-          j['_annotation']['completeness']= 0  #FIXME: dfast-qc
-          j['_annotation']['contamination']= 0 #FIXME: dfast-qc 
-          j['_annotation']['strain_heterogeneity']= 0 #FIXME: dfast-qc
+          #j['_annotation']['completeness']=  j['_dfastqc']['cc_result']['completeness'] || 0 
+          #j['_annotation']['contamination']= j['_dfastqc']['cc_result']['contamination'] || 0 
+          #j['_annotation']['strain_heterogeneity']= j['_dfastqc']['cc_result']['strain_heterogeneity'] || 0
           j['_annotation']['genome_count'] = genome_count
-          j['has_analysis'] = has_analysis
-          #puts JSON.pretty_generate(j)
-          #h = {"index"=> {"_index"=> "genome","_type"=> "metadata","_id"=> j['identifier'] }}
+
+          #    星　contamination, completeness, sequence number, rRNA gene
+          star = 1 
+          #    * contamination <10(%)
+          star += 1 if j['_annotation']['contamination'].to_i < 10
+          #    * completeness >60(%)
+          star += 1 if j['_annotation']['completeness'].to_i > 60 
+          #    * sequence number <30
+          star += 1 if j['_dfast']['Number of Sequences'].to_i < 30
+          #    * rRNA gene number >2
+          star += 1 if j['_dfast']['Number of rRNAs'].to_i < 30
+          #"data_type"=> "low-quality MAG",
+          star == 0 if j['has_analysis'] = false
+          j['evaluation'] = "⭐️" * star
+
+          output_file_genome_path = File.join('/work1/mdatahub/public/genome', asm_path, row['assembly_accession'],'genome.json')
+          File.open(output_file_genome_path ,mode = "w") do |out_g|
+            out_g.puts JSON.pretty_generate(j)
+          end
           h = {"create"=> {"_index"=> "genome","_type"=> "metadata","_id"=> j['identifier'] }}
           out_p.puts h.to_json
           out_p.puts j.to_json
-          #end
         end
       end
     end
@@ -145,6 +157,6 @@ end
 input = ARGV.shift
 output= ARGV.shift
 
-AssemblyReports2RDF.new(input,output)
+AssemblyReports.new(input,output)
 
 

@@ -39,6 +39,11 @@ def acc2path acc
   path ="#{acc_prefix}/#{dir}/#{dir2}"
 end
 
+def asm_acc2path asm_acc
+  a = asm_acc.gsub("GCA_","GCA").scan(/.{1,3}/)
+  a[0..3].join("/")
+end
+
 
 class BioSampleSet
   include Enumerable
