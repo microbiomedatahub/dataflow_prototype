@@ -182,6 +182,7 @@ def export2jsonfile(fig:px.bar, bioproject:str, rank:str):
         pass
     # jsonファイルに書き出し
     path = acc2path(bioproject)
+    print("path: ", path, "project: ", bioproject)
     fig.write_json(f"{path}/analysis_{rank}.json", pretty=True)
 
 
