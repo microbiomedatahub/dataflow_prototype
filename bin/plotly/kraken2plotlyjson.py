@@ -35,7 +35,7 @@ else:
 headers = ['count', 'superkingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain'
            'filename', 'sig_name', 'sig_md5', 'total_counts']
 # 出力する階級をリストで指定
-ranks = ["order", "family", "genus", "species"]
+ranks = ["phylum", "family", "genus", "species"]
 
 def plotlyjson_formatter(d: pd.DataFrame, filenname:str, rank: str) -> dict:
     """
@@ -175,11 +175,13 @@ def export2jsonfile(fig:px.bar, bioproject:str, rank:str):
     - プロジェクト毎にまとめたplotly用系統組成をJSONファイルを書き出す
     - プロジェクト名のディレクトリを作成しそのディレクトリに各ランクのファイルを配置する
     """
-    # プロジェクト名のディレクトリを作成する
+    # プロジェクト名のディレクトリを作成する > projectディレクトリは有るものと考える
+    """
     try:
         os.mkdir(path)
     except FileExistsError:
         pass
+    """
     # jsonファイルに書き出し
     path = acc2path(bioproject)
     print("path: ", path, "project: ", bioproject)
