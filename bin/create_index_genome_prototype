@@ -64,7 +64,7 @@ class AssemblyReports
             "dateModified"=> row['seq_rel_date'].gsub('/','-'), #nil,
             "datePublished"=> row['seq_rel_date'].gsub('/','-'),
             "_annotation"=> {},
-            "data_type"=> "low-quality MAG",
+            "data_type"=> "MAG",
             "data_source"=> "INSDC"
           }
           asm_path = asm_acc2path row['assembly_accession']
@@ -101,7 +101,7 @@ class AssemblyReports
             File.open(input_dfastqc) do |f|
              dqc = JSON.load(f)
              j['_dfastqc'] = dqc
-          j['_annotation']['completeness']=  j['_dfastqc']['cc_result']['completeness'] || 0
+          j['_annotation']['completeness'] =  j['_dfastqc']['cc_result']['completeness'] || 0
           j['_annotation']['contamination']= j['_dfastqc']['cc_result']['contamination'] || 0
           j['_annotation']['strain_heterogeneity']= j['_dfastqc']['cc_result']['strain_heterogeneity'] || 0
             end
@@ -130,16 +130,26 @@ class AssemblyReports
           #    星　contamination, completeness, sequence number, rRNA gene
           star = 1 
           #    * contamination <10(%)
-          star += 1 if j['_annotation']['contamination'].to_i < 10
+          star += 1 if j['_annotation']['contamination'].to_f < 10
           #    * completeness >60(%)
-          star += 1 if j['_annotation']['completeness'].to_i > 60 
+          star += 1 if j['_annotation']['completeness'].to_f > 60 
           #    * sequence number <30
           star += 1 if j['_dfast']['Number of Sequences'].to_i < 30
           #    * rRNA gene number >2
-          star += 1 if j['_dfast']['Number of rRNAs'].to_i < 30
+          star += 1 if j['_dfast']['Number of rRNAs'].to_i > 2
           #"data_type"=> "low-quality MAG",
           star == 0 if j['has_analysis'] = false
-          j['evaluation'] = "⭐️" * star
+          j['quality'] = star
+          j['quality_label'] = "⭐️" * star
+#          puts "id", row['assembly_accession']
+#          puts "contamination", j['_annotation']['contamination'].to_f
+#          puts j['_annotation']['contamination'].to_f < 10
+#          puts "completeness", j['_annotation']['completeness'].to_f
+#          puts j['_annotation']['completeness'].to_f > 60
+#          puts "Number of Sequences", j['_dfast']['Number of Sequences'].to_i 
+#          puts j['_dfast']['Number of Sequences'].to_i < 30
+#          puts "Number of rRNAs", j['_dfast']['Number of rRNAs'].to_i
+#          puts j['_dfast']['Number of rRNAs'].to_i > 2
 
           output_file_genome_path = File.join('/work1/mdatahub/public/genome', asm_path, row['assembly_accession'],'genome.json')
           File.open(output_file_genome_path ,mode = "w") do |out_g|

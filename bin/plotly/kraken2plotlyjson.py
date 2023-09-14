@@ -153,7 +153,9 @@ def get_file_names(input_path) -> list:
     Returns:
         list: ディレクトリに含まれる全tsvファイルのリスト
     """
-    file_names = glob.glob(input_path + '/*.' + file_extension)
+    
+    # 子階層の任意のディレクトリ名にマッチするワイルドカードを追加
+    file_names = glob.glob(input_path + '/*/*.' + file_extension)
     return file_names
 
 
@@ -166,6 +168,9 @@ def get_run_id(file_name) -> str:
     Returns:
         str: run_id
     """
+    # input_path=子階層/ファイル名なのでファイル名部分のみに修正
+    file_name = file_name.split("/")[-1]
+    # 三頭のアルファベット＋数字分部分を取得
     run_id = re.findall(r'^[a-zA-Z0-9]+', file_name)
     return run_id[0]
 
@@ -175,13 +180,13 @@ def export2jsonfile(fig:px.bar, bioproject:str, rank:str):
     - プロジェクト毎にまとめたplotly用系統組成をJSONファイルを書き出す
     - プロジェクト名のディレクトリを作成しそのディレクトリに各ランクのファイルを配置する
     """
-    # プロジェクト名のディレクトリを作成する
+    # プロジェクト名のディレクトリを作成する > projectディレクトリは有るものと考える
     """
     try:
         os.mkdir(path)
     except FileExistsError:
         pass
-    """    
+    """
     # jsonファイルに書き出し
     path = acc2path(bioproject)
     print("path: ", path, "project: ", bioproject)
@@ -204,33 +209,57 @@ def acc2path(acc:str) -> str:
     return path
 
 
+def chunks(lst, n):
+    """_summary_
+    引数として与えられたリストをサイズnに分割しyeildする
+    """
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 def main():
     """__summary__
     - kraken2 report形式のファイルを読み込み、plotly用のjsonを書き出す
     - ファイル名の先頭にRUN IDつくので、このIDをBioProjectに変換してプロジェクトごとのjsonを書き出す
     - 各ファイルが一つのRUNの解析に相当するが、RUNをBioSampleに変換してbarchartのサンプル名として表示する
     """
-    # 下記ディレクトリに含まれるファイル名はID変換のテスト用につけたものでで実際のサンプルとは異なる
+    # ファイル名のリストを取得
     file_names = get_file_names(input_path)
-    file_names = [f.split("/")[-1] for f in file_names if f.endswith(file_extension)]
+    # パスから子階層をふくんだファイル名を取得する
+    # file_names = [f.split("/")[-1] for f in file_names if f.endswith(file_extension)]
+    file_names = ["/".join(f.split("/")[-2:]) for f in file_names if f.endswith(file_extension)]
     run_list = []
     for file_name in file_names:
         # Todo: file_nameはパス名を含むので、パス名を除いたファイル名のみを取得する
         run_id = get_run_id(file_name)
         run_list.append(run_id)
     # run-bioprojectの関係リストを取得
-    run_bp_list = togoid_run2bioproject.run_bioproject(run_list)
+    # run_bp_list = togoid_run2bioproject.run_bioproject(run_list)
+    run_bp_list = []
+    print("len run_list: ", len(run_list))
+    for l in chunks(run_list, 500):
+        print("l: ", l)
+        run_bp_list.append(togoid_run2bioproject.run_bioproject(l))
+    print("run_bp_list: ", run_bp_list, len(run_bp_list))
     # bioprojectでrun idをグループ化
     bp_nested_list = togoid_run2bioproject.convert_nested_bioproject_list(run_bp_list)
     # bioproject毎に組成データを読み込む（ネストしたそれぞれのリスト（run）に先頭の文字列が一致するファイルリストを作りファイルを読み込む）
-    # Todo: 開発上speciesでテストするが、s,g,f,oでDFをつくりJSONを書き出す
     for k, v in bp_nested_list.items():
         # k: bioproject, v: run_id list
         # run idでfile_namesをフィルタリング（先頭の文字列がrun_id listに含まれるファイル名を取得）
-        filtered_file_names = [f for f in file_names if f.startswith(tuple(v))]
-        # run idからrun:biosampleの辞書を作成
-        run_list = [f.split("_")[0] for f in filtered_file_names]
+
+        # "/45/DRR002467_2.fastq.term.fastq.sig.csv"のようなパスの途中にRUN IDが含まれる
+        # "/"でsplitした二つ目の要素の先頭がRUN IDに一致するファイルを取得する
+        # filtered_file_names = [f for f in file_names if f.startswith(tuple(v))]
+        filtered_file_names = [f for f in file_names if f.split("/")[-1].startswith(tuple(v))]
+        # prun idからrun:biosampleの辞書を作成. > filtered_file_namesはパス名を含むので、パス名を除く
+        # run_list = [f.split("_")[0] for f in filtered_file_names]
+        # Todo: RUN IDに必ずsufixが付くか確認する。付かない場合にsplitを二重に行うような方向で考える
+        run_list = [re.split("_|/", f)[-2] for f in filtered_file_names]
+        print(run_list)
         sample_names = togoid_run2biosample.run_biosample(run_list)
+        print(sample_names)
+        return
         for rank in ranks:
             dfs = []
             for i,f in enumerate(filtered_file_names):

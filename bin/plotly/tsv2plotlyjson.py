@@ -131,6 +131,10 @@ def create_plot_json(bioproject:str, file_names:list):
         print('bioproject directory already exists')
 
     # jsonファイルに書き出し
+<<<<<<< HEAD
+=======
+    # パスを出力
+>>>>>>> 5bf991d8637587fc2c853f7b22b8f53b8bd93cd9
     print("output_path: ", f"{output_path}/{bioproject}")
     fig.write_json(f"{output_path}/{bioproject}/analysis.json", pretty=True)
 
