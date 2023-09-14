@@ -190,7 +190,12 @@ def export2jsonfile(fig:px.bar, bioproject:str, rank:str):
     # jsonファイルに書き出し
     path = acc2path(bioproject)
     print("path: ", path, "project: ", bioproject)
-    fig.write_json(f"{path}/analysis_{rank}.json", pretty=True)
+    # Todo: ディレクトリの存在確認。無い場合は作成する
+    try:
+        fig.write_json(f"{path}/analysis_{rank}.json", pretty=True)
+    except FileNotFoundError:
+        os.makedirs(path)
+        fig.write_json(f"{path}/analysis_{rank}.json", pretty=True)
 
 
 def acc2path(acc:str) -> str:
