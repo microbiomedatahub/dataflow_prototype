@@ -209,6 +209,14 @@ def acc2path(acc:str) -> str:
     return path
 
 
+def chunks(lst, n):
+    """_summary_
+    引数として与えられたリストをサイズnに分割しyeildする
+    """
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 def main():
     """__summary__
     - kraken2 report形式のファイルを読み込み、plotly用のjsonを書き出す
@@ -226,7 +234,11 @@ def main():
         run_id = get_run_id(file_name)
         run_list.append(run_id)
     # run-bioprojectの関係リストを取得
-    run_bp_list = togoid_run2bioproject.run_bioproject(run_list)
+    # run_bp_list = togoid_run2bioproject.run_bioproject(run_list)
+    # Todo: chunksizeを指定して一度に読み込む行数を制限する
+    run_bp_list = []
+    for l in chunks(run_list, 1000):
+        run_bp_list.extend(togoid_run2bioproject.run_bioproject(l))
     # bioprojectでrun idをグループ化
     bp_nested_list = togoid_run2bioproject.convert_nested_bioproject_list(run_bp_list)
     # bioproject毎に組成データを読み込む（ネストしたそれぞれのリスト（run）に先頭の文字列が一致するファイルリストを作りファイルを読み込む）
@@ -240,9 +252,10 @@ def main():
         filtered_file_names = [f for f in file_names if f.split("/")[-1].startswith(tuple(v))]
         # prun idからrun:biosampleの辞書を作成. > filtered_file_namesはパス名を含むので、パス名を除く
         # run_list = [f.split("_")[0] for f in filtered_file_names]
-        # Todo: RUN IDに必ずsufixが付くか確認する。付かない場合にsplitを二重に行うような方向で考える
         run_list = [re.split("_|/", f)[-2] for f in filtered_file_names]
         sample_names = togoid_run2biosample.run_biosample(run_list)
+        print(sample_names)
+        return
         for rank in ranks:
             dfs = []
             for i,f in enumerate(filtered_file_names):
