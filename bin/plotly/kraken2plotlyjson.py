@@ -190,7 +190,12 @@ def export2jsonfile(fig:px.bar, bioproject:str, rank:str):
     # jsonファイルに書き出し
     path = acc2path(bioproject)
     print("path: ", path, "project: ", bioproject)
-    fig.write_json(f"{path}/analysis_{rank}.json", pretty=True)
+    # Todo: ディレクトリの存在確認。無い場合は作成する
+    try:
+        fig.write_json(f"{path}/analysis_{rank}.json", pretty=True)
+    except FileNotFoundError:
+        os.makedirs(path)
+        fig.write_json(f"{path}/analysis_{rank}.json", pretty=True)
 
 
 def acc2path(acc:str) -> str:
@@ -254,8 +259,6 @@ def main():
         # run_list = [f.split("_")[0] for f in filtered_file_names]
         run_list = [re.split("_|/", f)[-2] for f in filtered_file_names]
         sample_names = togoid_run2biosample.run_biosample(run_list)
-        print(sample_names)
-        return
         for rank in ranks:
             dfs = []
             for i,f in enumerate(filtered_file_names):
