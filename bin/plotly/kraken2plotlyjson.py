@@ -235,12 +235,10 @@ def main():
         run_list.append(run_id)
     # run-bioprojectの関係リストを取得
     # run_bp_list = togoid_run2bioproject.run_bioproject(run_list)
+    # Todo: chunksizeを指定して一度に読み込む行数を制限する
     run_bp_list = []
-    print("len run_list: ", len(run_list))
     for l in chunks(run_list, 500):
-        print("l: ", l)
-        run_bp_list.append(togoid_run2bioproject.run_bioproject(l))
-    print("run_bp_list: ", run_bp_list, len(run_bp_list))
+        run_bp_list.extend(togoid_run2bioproject.run_bioproject(l))
     # bioprojectでrun idをグループ化
     bp_nested_list = togoid_run2bioproject.convert_nested_bioproject_list(run_bp_list)
     # bioproject毎に組成データを読み込む（ネストしたそれぞれのリスト（run）に先頭の文字列が一致するファイルリストを作りファイルを読み込む）
@@ -254,12 +252,8 @@ def main():
         filtered_file_names = [f for f in file_names if f.split("/")[-1].startswith(tuple(v))]
         # prun idからrun:biosampleの辞書を作成. > filtered_file_namesはパス名を含むので、パス名を除く
         # run_list = [f.split("_")[0] for f in filtered_file_names]
-        # Todo: RUN IDに必ずsufixが付くか確認する。付かない場合にsplitを二重に行うような方向で考える
         run_list = [re.split("_|/", f)[-2] for f in filtered_file_names]
-        print(run_list)
         sample_names = togoid_run2biosample.run_biosample(run_list)
-        print(sample_names)
-        return
         for rank in ranks:
             dfs = []
             for i,f in enumerate(filtered_file_names):
