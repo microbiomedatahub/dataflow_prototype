@@ -12,6 +12,8 @@ import re
 from sra_id_convert import togoid_run2biosample, togoid_run2bioproject
 # デフォルトの出力パスの共通部分
 output_path = "/work1/mdatahub/public/project"
+# togoidに問い合わせるIDのchunk size
+chunksize = 500
 
 # 入力ファイルパス,出力ファイルパスはコマンドラインoption -i, -oで指定する
 # cwd = os.getcwd()
@@ -242,7 +244,7 @@ def main():
     # run_bp_list = togoid_run2bioproject.run_bioproject(run_list)
     # Todo: chunksizeを指定して一度に読み込む行数を制限する
     run_bp_list = []
-    for l in chunks(run_list, 1000):
+    for l in chunks(run_list, chunksize):
         run_bp_list.extend(togoid_run2bioproject.run_bioproject(l))
     # bioprojectでrun idをグループ化
     bp_nested_list = togoid_run2bioproject.convert_nested_bioproject_list(run_bp_list)
@@ -258,7 +260,15 @@ def main():
         # prun idからrun:biosampleの辞書を作成. > filtered_file_namesはパス名を含むので、パス名を除く
         # run_list = [f.split("_")[0] for f in filtered_file_names]
         run_list = [re.split("_|/", f)[-2] for f in filtered_file_names]
-        sample_names = togoid_run2biosample.run_biosample(run_list)
+
+        # todo: run_listがchunk_sizeを超える場合chunks()で分割して実行する
+        sample_names = {}
+        if len(run_list) < chunksize:
+            sample_names = togoid_run2biosample.run_biosample(run_list)
+        else:
+            for l in chunks(run_list, chunksize):
+                sample_names.update(togoid_run2biosample.run_biosample(l))
+
         for rank in ranks:
             dfs = []
             for i,f in enumerate(filtered_file_names):
