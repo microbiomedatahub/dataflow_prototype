@@ -267,6 +267,7 @@ def main():
             sample_names = togoid_run2biosample.run_biosample(run_list)
         else:
             for l in chunks(run_list, chunksize):
+                print("bioproject: ", k, "len: ", len(l))
                 sample_names.update(togoid_run2biosample.run_biosample(l))
 
         for rank in ranks:
