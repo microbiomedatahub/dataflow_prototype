@@ -1,32 +1,54 @@
 # データの新規作成・更新手順
 
-## 新規作成
-### 1. git clone 
+データや解析データの取得およびMdatahub環境へのデータ配置、オントロジーマッピングなどアノテーションおよびデータ形式変換、検索データのElasticsearchデータ投入について記載する
+
+## セットアップ 
 ```
 git clone git@github.com:microbiomedatahub/dataflow_prototype.git
 cd dataflow_prototype
 ```
 
-### X. bioproject.xml取得
-最新のbioproject.xmlを取得します。
-`TBW`
+
+## 新規作成
+### 1. 最新のbioproject.xml取得
+```/work1/mdatahub/repos/dataflow_prototype/bioproject.xml```
+のシンボリックリンクのsourceが最新データ
 
 ```
-curl https://ddbj.nig.ac.jp/public/ddbj_database/bioproject/bioproject.xml
+[mdb_dev@cs9 dataflow_prototype]$ pwd
+/work1/mdatahub/repos/dataflow_prototype
+[mdb_dev@cs9 dataflow_prototype]$ ls -la bioproject.xml
+lrwxrwxrwx. 1 mdb_dev mdb_dev 23  6月 12  2023 bioproject.xml -> bioproject-20230612.xml
 ```
 
-### X. create_project_accessions.rb 
-Microbiome関連のbioproject IDリストを取得します。
-`TBW`
+### 2. 対象となるProjectサブセットのIDリストを取得
+* MDatahub INSDC-MAG
+`create_project_accessions.rb `
 
-### X. bioproject_mget.rb
-プロジェクト毎に各種データを取得します。
-`TBW`
+* MDatahub Reference-Genome
+```TODO```
 
-### X. create_indexes.rb
-Elasticsearch bulk APIで投入用のLine-delimited JSON形式ファイルを生成します。
-`TBW`
+* GI-MDatahub
+```TODO```
 
+### 3. プロジェクト毎に各種データを取得
+`bioproject_mget.rb`
+
+### 4.Elasticsearch bulk APIで投入用のLine-delimited JSON形式ファイルを生成
+
+`create_indexes.rb`
+
+### 5. Elasticsearchへの全長jsonlのbulk import
+Elasticsearchは100MBを超えるJSONファイルのbulk importができないため、このサイズを超えるデータは分割してインポートします。
+
+```
+mkdir bulk_import
+bash bin/split.sh #TODO:対象ファイルと出力先の修正
+curl -XDELETE http://localhost:9200/bioproject 
+bash bin/bulk_import.sh
+```
+
+---
 - テストデータを利用した動作確認が可能です。
 ```
 ruby bin/create_indexes.rb testdata
@@ -51,15 +73,7 @@ testdata/
     │   │       └── PRJDB4224.xml
 ```
 
-# X. Elasticsearchへの全長jsonlのbulk import
-Elasticsearchは100MBを超えるJSONファイルのbulk importができないため、このサイズを超えるデータは分割してインポートします。
 
-```
-mkdir bulk_import
-bash bin/split.sh #TODO:対象ファイルと出力先の修正
-curl -XDELETE http://localhost:9200/bioproject 
-bash bin/bulk_import.sh
-```
 
 ## Data model
 
