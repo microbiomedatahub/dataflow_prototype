@@ -9,7 +9,7 @@ https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従�
 #### mag-insdc
 1. 最新のbioproject.xml取得
     - ```wget https://ddbj.nig.ac.jp/public/ddbj_database/bioproject/bioproject.xml```
-    - ```/work1/mdatahub/repos/dataflow_prototype/bioproject.xml``` のシンボリックリンクのsourceが最新データ
+    - 現在の本番は、```/work1/mdatahub/repos/dataflow_prototype/bioproject.xml``` のシンボリックリンクのsourceが最新データ
 
 ```
 [mdb_dev@cs9 dataflow_prototype]$ pwd
