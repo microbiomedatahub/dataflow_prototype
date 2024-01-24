@@ -22,14 +22,28 @@ lrwxrwxrwx. 1 mdb_dev mdb_dev 23  6月 12  2023 bioproject.xml -> bioproject-202
 ```
 
 ### 2. 対象となるProjectサブセットのIDリストを取得
-* MDatahub INSDC-MAG
+* mag-insdc
 `create_project_accessions.rb `
 
-* MDatahub Reference-Genome
-```TODO```
+* gnm-refseq
+PGAPを使ってないいにしえのモデル微生物３件。全てのリファレンスゲノムは、強制的に、PRJNA224116のRefSeqエントリーに紐づけることにする
+```
+[tf@at044 ~]$ grep "assembly from type material" /lustre9/open/shared_data/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt |egrep "archaea|bacteria" |cut -f2 |sort |uniq -c
+   21745 PRJNA224116
+      1 PRJNA57675
+      1 PRJNA57777
+      1 PRJNA57799
+```
 
-* GI-MDatahub
-```TODO```
+* mag-mgnify
+```
+TODO
+```
+
+* test
+```
+TODO
+```
 
 ### 3. プロジェクト毎に各種データを取得
 `bioproject_mget.rb`
