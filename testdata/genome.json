@@ -1,0 +1,120 @@
+{
+  "type": "genome",
+  "identifier": "GCA_029762495.1",
+  "organism": "Candidatus Thermoplasmatota archaeon",
+  "title": "Candidatus Thermoplasmatota archaeon",
+  "description": "derived from metagenome; fragmented assembly; genus undefined",
+  "data type": "Genome sequencing and assembly",
+  "organization": "Research Center of Biotechnology RAS",
+  "publication": [
+    {
+    }
+  ],
+  "properties": {
+    "assembly_accession": "GCA_029762495.1",
+    "bioproject": "PRJNA864620",
+    "biosample": "SAMN33973103",
+    "wgs_master": "JARVGM000000000.1",
+    "refseq_category": "na",
+    "taxid": "2806419",
+    "species_taxid": "2806419",
+    "organism_name": "Candidatus Thermoplasmatota archaeon",
+    "infraspecific_name": "",
+    "isolate": "M17C-73-06",
+    "version_status": "latest",
+    "assembly_level": "Scaffold",
+    "release_type": "Major",
+    "genome_rep": "Full",
+    "seq_rel_date": "2023/04/16",
+    "asm_name": "ASM2976249v1",
+    "submitter": "Research Center of Biotechnology RAS",
+    "gbrs_paired_asm": "na",
+    "paired_asm_comp": "na",
+    "ftp_path": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/029/762/495/GCA_029762495.1_ASM2976249v1",
+    "excluded_from_refseq": "derived from metagenome; fragmented assembly; genus undefined",
+    "relation_to_type_material": "",
+    "asm_not_live_date": "na"
+  },
+  "dbXrefs": [
+
+  ],
+  "distribution": null,
+  "Download": null,
+  "status": "public",
+  "visibility": null,
+  "dateCreated": "2023-04-16",
+  "dateModified": "2023-04-16",
+  "datePublished": "2023-04-16",
+  "_annotation": {
+    "sample_count": 1,
+    "sample_organism": [
+      "Candidatus Thermoplasmatota archaeon"
+    ],
+    "sample_taxid": [
+      "2806419"
+    ],
+    "sample_host_organism": [
+
+    ],
+    "sample_host_organism_id": [
+
+    ],
+    "sample_host_disease": [
+
+    ],
+    "sample_host_disease_id": [
+
+    ],
+    "sample_host_location": [
+      "Russia: Taman Peninsula, Golubitskoye Lake"
+    ],
+    "sample_host_location_id": [
+
+    ],
+    "data_size": "0.53 MB",
+    "sample_ph_range": {
+      "min": null,
+      "max": null
+    },
+    "sample_temperature_range": {
+      "min": null,
+      "max": null
+    },
+    "completeness": 63.53,
+    "contamination": 6.25,
+    "strain_heterogeneity": 0.0,
+    "genome_count": 1
+  },
+  "data_type": "MAG",
+  "data_source": "INSDC",
+  "_dfast": {
+    "Total Sequence Length (bp)": "1839870",
+    "Number of Sequences": "456",
+    "Longest Sequences (bp)": "21910",
+    "N50 (bp)": "4881",
+    "Gap Ratio (%)": "0.001631",
+    "GCcontent (%)": "35.2",
+    "Number of CDSs": "1467",
+    "Average Protein Length": "255.7",
+    "Coding Ratio (%)": "61.2",
+    "Number of rRNAs": "0",
+    "Number of tRNAs": "34",
+    "Number of CRISPRs": "0"
+  },
+  "has_analysis": false,
+  "_dfastqc": {
+    "tc_result": [
+
+    ],
+    "cc_result": {
+      "completeness": 63.53,
+      "contamination": 6.25,
+      "strain_heterogeneity": 0.0
+    },
+    "gtdb_result": [
+
+    ]
+  },
+  "quality": 3,
+  "quality_label": "⭐️⭐️⭐️"
+}
