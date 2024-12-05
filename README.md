@@ -27,7 +27,37 @@ lrwxrwxrwx. 1 mdb_dev mdb_dev 23  6月 12  2023 bioproject.xml -> bioproject-202
 
 ### 2. 対象となるProjectサブセットのIDリストを取得 `create_project_accessions.rb `
 ### 3. プロジェクト毎に各種データ（bioprojext.xml、biosample IDs、biosampleset.xml）を取得 `bioproject_mget.rb`
-### 4. Elasticsearch bulk APIで投入用のLine-delimited JSON形式ファイルを生成 `create_indexes.rb`
+### 4. Elasticsearch bulk APIで投入用のLine-delimited JSON形式ファイルを生成 
+
+#### Project `create_indexes.rb`
+
+```
+    * create_indexes.rbスクリプト作成(6/14 Done)
+        * 仕様：bioprojectxml2json.rbとbioproject_plus.rbの統合
+        * 仕様：bioproject_accessions (102176件) かつ `/work1/mdatahub/public/project/` にデータ取得されたaccessionsがindex対象
+        * 検討：projectとgenomeのindexを一緒に作った方がよいかもしれない
+        * working directory: /work1/mdatahub/repos/dataflow_prototype
+        * 入力: bioproject.xml (bioproject-20230612.xml)
+        * 入力: project_accessions (project_accessions-20230612)
+        * 入力: /work1/mdatahub/public/project/
+            * ln -s /work1/mdatahub/public/project で対応
+        * 出力: mdatahub_index_project.jsonl (mdatahub_index_project-20230612.jsonl)
+    * ESに投入（6/14 Done）
+        * `/work1/mdatahub/repos/dataflow_prototype/mdatahub_index_project-20230612.jsonl`
+            * 102174/102176件
+            * PRJDB11833, PRJDB15377, 2件分足りないのは公開ファイルとEntrez Directが叩くAPIのタイムラグ？
+    * TODO: 入力データ配置後にcreate_indexes.rbスクリプト拡張後、ES投入（次回の合宿？）
+        * genome_count、has_analysis
+            * [bioproject_plus.rb#L489-L505](https://github.com/microbiomedatahub/dataflow_prototype/blob/main/bin/bioproject_plus.rb#L489-L505) のあたり
+        * data_sizeの反映
+        * genome index作成
+        * ES投入
+```
+#### Genome `create_index_genome_prototype.rb`
+
+```
+```
+
 ### 5. Elasticsearchへの全長jsonlのbulk import
 
 Elasticsearchは100MBを超えるJSONファイルのbulk importができないため、このサイズを超えるデータは分割してインポートします。
