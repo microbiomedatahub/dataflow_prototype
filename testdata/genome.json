@@ -115,6 +115,15 @@
 
     ]
   },
+  "_mbgd": ["10000","10001","2000"],
+  "_bac2feature": {
+    "gram_stain": "negative",
+    "sporulation": "no",
+    "motility": "no",
+    "metabolism": "anaerobic",
+    "range_tmp": "theromophilic",
+    "range_salinity": "non-halophilic"
+  },
   "quality": 3,
   "quality_label": "⭐️⭐️⭐️"
 }
