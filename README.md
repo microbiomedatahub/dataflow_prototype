@@ -80,25 +80,36 @@ $ python tsv2plotlyjson.py -i 入力ファイルのパス -o 出力パス
 
 
 ---
-### 利用未確認
+### スクリプト 利用確認
+* create_project_accessions.rb # (2)
+* bioproject_mget.rb # (3)
+* create_indexes.rb　# (4)-a
+* create_index_genome_prototype # (4)-b
+* bulk_import.sh #(5)
+* split.sh #(5)?
+* plotly/tsv2plotlyjson.py #(6) 
 
-bin/bioprojectxml2json.rbにBioProject.xmlをjsonlファイルに変換します。
-#### 注意事項
-- 現状L:162に読み込むxmlのパスをハードコードしているので、実際のパスに書き換えが必要
-- 出力するファイル名もL146にハードコードしているので、必要であればこちらの書き換えが必要
-- "ruby bioprojectxml2json.rb" で実行します。
-- 引数で指定されたディレクトリ内のbioproject.xmlを入力ファイルとし、同じディレクトリ内にbioproject.jsonが出力されます。デフォルトはカレントディレクトリです。（2023-06-14更新）
-- Classをlib_bioprojectxml2json.rbに移動し、外部ファイル化しました。（2023-06-14更新）
+### ESセットアップ
 
-```
-%ruby bin/bioprojectxml2json.rb testdata
-bin/bioprojectxml2json.rb:11: warning: Ractor is experimental, and the behavior may change in future versions of Ruby! Also there are many implementation issues.
-2023-06-14 11:18:25 +0900 Started
-2 packages converted.
-2023-06-14 11:18:25 +0900 Finished
-```
+`要ドキュメント`
 
+* index_template/*
 
+#### script参照
+* mdatahub.rb
+* lib_bioprojectxml2json.rb
+
+#### 動作未確認作業スクリプト
+* mget_asm
+* mget_asm_checkm
+* mget_biosample_from_asm
+* mget_asm_gi
+* rebuild_directory_project.rb
+* rebuild_directory_genome.rb
+* mget
+* mget_bioproject
+* copy_MAGoutput_dfast_218655.rb
+* copy_MAGoutput_dfastqc_218655.rb
 
 ---
 ## TODO
