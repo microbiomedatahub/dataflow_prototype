@@ -2,12 +2,19 @@
 
 データや解析データの取得およびMdatahub環境へのデータ配置、オントロジーマッピングなどアノテーションおよびデータ形式変換、検索データのElasticsearchデータ投入について記載する
 
-## セットアップ 
-https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従う
+## 環境セットアップ 
+https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従う。
 
-## データセット毎の新規データ取得、変換および投入
-#### mag-insdc
-1. 最新のbioproject.xml取得
+## テストデータを利用した動作確認
+https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従う。以下のテストデータ変換方法は古いので、要動作確認。
+
+```
+ruby bin/create_indexes.rb testdata
+```
+
+## INSDC由来のProjectとMAGの新規データ取得、変換および投入
+
+### 1. 最新のbioproject.xml取得
     - ```wget https://ddbj.nig.ac.jp/public/ddbj_database/bioproject/bioproject.xml```
     - 現在の本番は、```/work1/mdatahub/repos/dataflow_prototype/bioproject.xml``` のシンボリックリンクのsourceが最新データ
 
@@ -18,11 +25,12 @@ https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従�
 lrwxrwxrwx. 1 mdb_dev mdb_dev 23  6月 12  2023 bioproject.xml -> bioproject-20230612.xml
 ```
 
-2. 対象となるProjectサブセットのIDリストを取得 `create_project_accessions.rb `
-3. プロジェクト毎に各種データ（bioprojext.xml、biosample IDs、biosampleset.xml）を取得 `bioproject_mget.rb`
-4. Elasticsearch bulk APIで投入用のLine-delimited JSON形式ファイルを生成 `create_indexes.rb`
-5. Elasticsearchへの全長jsonlのbulk import
-    - Elasticsearchは100MBを超えるJSONファイルのbulk importができないため、このサイズを超えるデータは分割してインポートします。
+### 2. 対象となるProjectサブセットのIDリストを取得 `create_project_accessions.rb `
+### 3. プロジェクト毎に各種データ（bioprojext.xml、biosample IDs、biosampleset.xml）を取得 `bioproject_mget.rb`
+### 4. Elasticsearch bulk APIで投入用のLine-delimited JSON形式ファイルを生成 `create_indexes.rb`
+### 5. Elasticsearchへの全長jsonlのbulk import
+
+Elasticsearchは100MBを超えるJSONファイルのbulk importができないため、このサイズを超えるデータは分割してインポートします。
 ```
 mkdir bulk_import
 bash bin/split.sh #TODO:対象ファイルと出力先の修正
@@ -30,47 +38,7 @@ curl -XDELETE http://localhost:9200/bioproject
 bash bin/bulk_import.sh
 ```
 
-### test
-テストデータを利用した動作確認は https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従う。以下のテストデータ変換方法は古いので、要動作確認
-```
-ruby bin/create_indexes.rb testdata
-```
----
-## move from bin/README.md
-# bioprojectxml2json.rb
-
-BioProject.xmlをjsonlファイルに変換します。
-
-## 使い方
-- 現状L:162に読み込むxmlのパスをハードコードしています。実際のパスに書き換えてください
-- 出力するファイル名もL146にハードコードしています。必要であればこちらの書き換えもお願いします。
-- "ruby bioprojectxml2json.rb" で実行します。
-
-2023-06-14更新
-- 引数で指定されたディレクトリ内のbioproject.xmlを入力ファイルとし、同じディレクトリ内にbioproject.jsonが出力されます。デフォルトはカレントディレクトリです。
-- Classをlib_bioprojectxml2json.rbに移動し、外部ファイル化しました。
-
-```
-%ruby bin/bioprojectxml2json.rb testdata
-bin/bioprojectxml2json.rb:11: warning: Ractor is experimental, and the behavior may change in future versions of Ruby! Also there are many implementation issues.
-2023-06-14 11:18:25 +0900 Started
-2 packages converted.
-2023-06-14 11:18:25 +0900 Finished
-```
-
-
-# Elasticsearchへの全長jsonlのbulk import
-
-Elasticsearchは100MBを超えるJSONファイルのbulk importができないため、このサイズを超えるデータは分割してインポートします。
-
-- 分割作業用にjsonlをコピーします
-- cd bulk_import
-- source split.sh
-- curl -XDELETE http://localhost:9200/bioproject 
-- source bulk_import.sh
-
-# メタゲノム解析の系統組成データをplotly JSONに変換する
-
+### 6. メタゲノム解析の系統組成データをplotly JSONに変換する
 - Runごとの系統組成データ（例 ERR0000_1.fastq.sam.mapped..）の配置されたディレクトリを指定しBioProjectごとにPlotlyのstacked chartに読み込むJSONデータを書き出します。
 - チャートのx軸はRunからBioSapleに変換したIDが利用されます。同じBioSampleがサンプルに割り当てられた場合、サンプル名にチャート内indexを表すsuffixが振られます。
 - RunからBioProjectへの変換、RunからBioSampleへの変換はTogoIDを利用しています。
@@ -81,6 +49,27 @@ Elasticsearchは100MBを超えるJSONファイルのbulk importができない�
  ```
 $ python tsv2plotlyjson.py -i 入力ファイルのパス -o 出力パス
 
+6. 
+
+
+---
+### 利用未確認
+
+bin/bioprojectxml2json.rbにBioProject.xmlをjsonlファイルに変換します。
+#### 注意事項
+- 現状L:162に読み込むxmlのパスをハードコードしているので、実際のパスに書き換えが必要
+- 出力するファイル名もL146にハードコードしているので、必要であればこちらの書き換えが必要
+- "ruby bioprojectxml2json.rb" で実行します。
+- 引数で指定されたディレクトリ内のbioproject.xmlを入力ファイルとし、同じディレクトリ内にbioproject.jsonが出力されます。デフォルトはカレントディレクトリです。（2023-06-14更新）
+- Classをlib_bioprojectxml2json.rbに移動し、外部ファイル化しました。（2023-06-14更新）
+
+```
+%ruby bin/bioprojectxml2json.rb testdata
+bin/bioprojectxml2json.rb:11: warning: Ractor is experimental, and the behavior may change in future versions of Ruby! Also there are many implementation issues.
+2023-06-14 11:18:25 +0900 Started
+2 packages converted.
+2023-06-14 11:18:25 +0900 Finished
+```
 
 
 
