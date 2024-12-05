@@ -53,11 +53,18 @@ print Time.now, " Converted\n"
 end
 
 #---
+
+  def output_file_path
+    d = Date.today
+    today = d.strftime("%Y%m%d")
+    File.join(root_dir,"mdatahub_index_project-#{today}.jsonl")
+  end
+
  
-index_project = File.join(root_dir,'mdatahub_index_project.jsonl')
+#index_project = File.join(root_dir,'mdatahub_index_project.jsonl')
 input_dir =  File.join(root_dir,'project')
 
-File.open(index_project ,mode = "w") do |out_p|
+File.open(output_file_path ,mode = "w") do |out_p|
     IO.foreach(out_path) do |line|
       begin
         j = JSON.parse(line)
