@@ -30,29 +30,6 @@ curl -XDELETE http://localhost:9200/bioproject
 bash bin/bulk_import.sh
 ```
 
-#### gnm-refseq
-PGAPを使ってないいにしえのモデル微生物３件。全てのリファレンスゲノムは、強制的に、PRJNA224116のRefSeqエントリーに紐づけることにする
-```
-[tf@at044 ~]$ grep "assembly from type material" /lustre9/open/shared_data/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt |egrep "archaea|bacteria" |cut -f2 |sort |uniq -c
-   21745 PRJNA224116
-      1 PRJNA57675
-      1 PRJNA57777
-      1 PRJNA57799
-```
-1. PRJNA224116.xmlを取得
-    - ```efetch -db bioproject -id PRJNA224116  -mode xml > PRJNA224116.xml```
-2. GCF階層ディレクトリを作成して GCF Assembly Accesion毎にbiosampleエントリーのxmlを取得して配置。ID関係の最新情報は以下で取得可能。
-```
-grep "assembly from type material" /lustre9/open/shared_data/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt |egrep "archaea|bacteria" |cut -f1,3
-```
-3. dfastおよびdfast-qcの結果を配置
-4. JSON変換と投入
-
-### mag-mgnify
-```
-TBW
-```
-
 ### test
 テストデータを利用した動作確認は https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従う。以下のテストデータ変換方法は古いので、要動作確認
 ```
@@ -103,5 +80,36 @@ Elasticsearchは100MBを超えるJSONファイルのbulk importができない�
 
  ```
 $ python tsv2plotlyjson.py -i 入力ファイルのパス -o 出力パス
+
+
+
+
+---
+## TODO
+
+RefSeqリファレンスゲノムおよびMGnify由来のMAGについてはあとで更新する（2024-12-05）
+
+### gnm-refseq
+PGAPを使ってないいにしえのモデル微生物３件。全てのリファレンスゲノムは、強制的に、PRJNA224116のRefSeqエントリーに紐づけることにする
+```
+[tf@at044 ~]$ grep "assembly from type material" /lustre9/open/shared_data/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt |egrep "archaea|bacteria" |cut -f2 |sort |uniq -c
+   21745 PRJNA224116
+      1 PRJNA57675
+      1 PRJNA57777
+      1 PRJNA57799
+```
+1. PRJNA224116.xmlを取得
+    - ```efetch -db bioproject -id PRJNA224116  -mode xml > PRJNA224116.xml```
+2. GCF階層ディレクトリを作成して GCF Assembly Accesion毎にbiosampleエントリーのxmlを取得して配置。ID関係の最新情報は以下で取得可能。
+```
+grep "assembly from type material" /lustre9/open/shared_data/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt |egrep "archaea|bacteria" |cut -f1,3
+```
+3. dfastおよびdfast-qcの結果を配置
+4. JSON変換と投入
+
+### mag-mgnify
+```
+TBW
+```
 
  ```
