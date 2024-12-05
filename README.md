@@ -44,12 +44,9 @@ bash bin/bulk_import.sh
 - RunからBioProjectへの変換、RunからBioSampleへの変換はTogoIDを利用しています。
 - 入力ファイルパス,出力ファイルパスはコマンドラインoption -i, -oで指定。出力ファイルのパスは省略可能。省略した場合入力ファイルと同じディレクトリにプロジェクト毎ディレクトリが作られる。
 
-## 使い方
-
- ```
+```
 $ python tsv2plotlyjson.py -i 入力ファイルのパス -o 出力パス
-
-6. 
+```
 
 
 ---
