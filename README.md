@@ -29,13 +29,11 @@ lrwxrwxrwx. 1 mdb_dev mdb_dev 23  6月 12  2023 bioproject.xml -> bioproject-202
 ### 3. プロジェクト毎に各種データ（bioprojext.xml、biosample IDs、biosampleset.xml）を取得 `bioproject_mget.rb`
 ### 4. Elasticsearch bulk APIで投入用のLine-delimited JSON形式ファイルを生成 
 
-#### Project `create_indexes.rb`
+#### Project `create_index_project.rb`
 
 ```
-    * create_indexes.rbスクリプト作成(6/14 Done)
         * 仕様：bioprojectxml2json.rbとbioproject_plus.rbの統合
         * 仕様：bioproject_accessions (102176件) かつ `/work1/mdatahub/public/project/` にデータ取得されたaccessionsがindex対象
-        * 検討：projectとgenomeのindexを一緒に作った方がよいかもしれない
         * working directory: /work1/mdatahub/repos/dataflow_prototype
         * 入力: bioproject.xml (bioproject-20230612.xml)
         * 入力: project_accessions (project_accessions-20230612)
@@ -53,7 +51,8 @@ lrwxrwxrwx. 1 mdb_dev mdb_dev 23  6月 12  2023 bioproject.xml -> bioproject-202
         * genome index作成
         * ES投入
 ```
-#### Genome `create_index_genome_prototype.rb`
+
+#### Genome `create_index_genome.rb`
 
 ```
 ```
@@ -83,8 +82,8 @@ $ python tsv2plotlyjson.py -i 入力ファイルのパス -o 出力パス
 ### スクリプト 利用確認
 * create_project_accessions.rb # (2)
 * bioproject_mget.rb # (3)
-* create_indexes.rb　# (4)-a
-* create_index_genome_prototype # (4)-b
+* create_index_project.rb　# (4)-a
+* create_index_genome.rb # (4)-b
 * bulk_import.sh #(5)
 * split.sh #(5)?
 * plotly/tsv2plotlyjson.py #(6) 
