@@ -30,10 +30,21 @@ $ pip install -r requirements.txt
 
 ## plotly用JSONファイルの出力
 
-```
-$ python kraken2plotlyjson.py -i <入力するファイルを配置したディレクトリのパス> [-o 出力するディレクトリのパス]
+- kraken形式の系統組成データを入力とし、プロジェクト単位でまとめた系統組成をplotlyで可視化する積層BarPlot用のJSONファイルを書き出します。
+- 指定したディレクトリにkraken2形式のファイルをディレクトリに分けて配置します
+- アプリケーションはディレクトリ内のファイルを再起的に収集しrun idを利用してプロジェクト単位にまとめて可視化用にJSONに変換します
+- 変換されたJSONは自動的にJSONファイルとしてプロジェクトディレクトリに書き出されます
+- 仮想環境の設定
+  - cd plotly
+  - source venv/bin/activate　
+- 実行
+  - python kraken2plotlyjson.py -i <入力するファイルを配置したディレクトリのパス>　
 
+実行例
 ```
+$ python kraken2plotlyjson.py -i /work1/mdatahub/private/megap
+```
+
 
 JSONはプロジェクト名のディレクトリに階級ごと（現在order, family, genus, speciesを設定している）書き出される。
 ```
@@ -73,3 +84,49 @@ JSONはプロジェクト名のディレクトリに階級ごと（現在order, 
 
 </script>
 ```
+
+# 系統組成データのTSVファイル出力概要
+
+
+keraken2composition.pyでは任意のディレクトリに保存されたkraken2形式の系統組成データを
+プロジェクト/ランク毎にTSVファイル変換してzip圧縮します
+
+## input形式
+
+- 以下のようなヘッダを持ったkraken2の出力形式を持ったcsvファイルを入力として想定しています。
+
+
+```
+count,superkingdom,phylum,class,order,family,genus,species,strain,filename,sig_name,sig_md5,total_counts
+```
+
+### 出力
+
+対象となるディレクトリからファイル名を収集しRUN IDに変換したうえで
+RUNに紐づく組成データをBioProjectにネストし出力します。
+
+例 phylum.tsv (値は同じサンプルをidを変えて複製したもの)
+```
+taxonomy        SRR7723005      SRR7723001
+Bacteroidota    81.4176652335257        81.4176652335257
+Actinomycetota  9.260924294191692       9.260924294191692
+Pseudomonadota  6.472021055729021       6.472021055729021
+Bacillota       2.011574111915777       2.011574111915777
+Bacillota_C     0.8378153046378185      0.8378153046378185
+```
+
+## 環境
+
+Python3.9以上
+
+## 利用方法
+
+- ファイルを指定して変換
+
+```
+python kraken2composition.py -i <input dir> -o <output dir>　-e <extension>
+```
+
+- -i: inputファイルのディレクトリを指定
+- -o: アウトプットファイルのディレクトリを指定
+- -e: 読み込む対象となるファイルの拡張子を指定。デフォルトで"csv"が指定されている

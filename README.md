@@ -68,15 +68,24 @@ bash bin/bulk_import.sh
 ```
 
 ### 6. メタゲノム解析の系統組成データをplotly JSONに変換する
-- Runごとの系統組成データ（例 ERR0000_1.fastq.sam.mapped..）の配置されたディレクトリを指定しBioProjectごとにPlotlyのstacked chartに読み込むJSONデータを書き出します。
+
+- 系統組成データ可視化の概要
+- Runごとの系統組成データ（例 ERR0000_1.fastq.sam.mapped..）をBioProjectごとにPlotlyのstacked chartに形式に変換し読み込みJSONデータを書き出します。
 - チャートのx軸はRunからBioSapleに変換したIDが利用されます。同じBioSampleがサンプルに割り当てられた場合、サンプル名にチャート内indexを表すsuffixが振られます。
 - RunからBioProjectへの変換、RunからBioSampleへの変換はTogoIDを利用しています。
-- 入力ファイルパス,出力ファイルパスはコマンドラインoption -i, -oで指定。出力ファイルのパスは省略可能。省略した場合入力ファイルと同じディレクトリにプロジェクト毎ディレクトリが作られる。
 
-```
-$ python tsv2plotlyjson.py -i 入力ファイルのパス -o 出力パス
-```
+- 仮想環境の設定
+  - cd plotly
+  - source venv/bin/activate　
 
+- 変換スクリプトの実行
+  - python kraken2plotlyjson.py -i <入力するファイルを配置したディレクトリのパス>　[-o <出力するファイルの親ディレクトリ>]
+
+- 実行例
+- 
+```
+$ python kraken2plotlyjson.py -i /work1/mdatahub/private/megap -o /work1/mdatahub/public/project
+```
 
 ---
 ### スクリプト 利用確認
