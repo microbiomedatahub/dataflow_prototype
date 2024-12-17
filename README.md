@@ -60,7 +60,24 @@ lrwxrwxrwx. 1 mdb_dev mdb_dev 23  6月 12  2023 bioproject.xml -> bioproject-202
 ### 5. Elasticsearchへの全長jsonlのbulk import
 
 Elasticsearchは100MBを超えるJSONファイルのbulk importができないため、このサイズを超えるデータは分割してインポートします。
+
+- JSONLの分割
+- split.shを実行しJSONLを分割しますが、入力ファイルと出力ディレクトリがハードコードされているため修正します
 ```
+cd dataflow_prototype
+vi bin/split.sh
+
+split -l $splitlen -a 3 -d /work1/mdatahub/app/dataflow_prototype/{jsonl path} ../bulk_import/{日付}/{prefix ex. project_jsonl_part_}
+```
+
+- ディレクトリを作り分割スクリプトを実行
+
+```
+mkdir bulk_import/ $(date +%Y%m%d)
+bash bin/split.sh 
+```
+
+
 mkdir bulk_import
 bash bin/split.sh #TODO:対象ファイルと出力先の修正
 curl -XDELETE http://localhost:9200/bioproject 
