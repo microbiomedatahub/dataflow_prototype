@@ -1,0 +1,12 @@
+{
+"nodes": [
+    {"id": "PRJNA62039", "group": 1},
+    {"id": "SAMN00713649", "group": 2},
+    {"id": "GCA_000205505.1", "group": 3},
+  ],
+  "links": [
+    {"source": "PRJNA62039", "target": "SAMN00713649", "value": 1},
+    {"source": "SAMN00713649", "target": "GCA_000205505.1l", "value": 1},
+    {"source": "PRJNA62039", "target": "GCA_000205505.1", "value": 1},
+  ]
+}
