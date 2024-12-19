@@ -1,0 +1,20 @@
+<script type="module" src="https://togostanza.github.io/metastanza-devel/layered-graph.js" async></script>
+
+<togostanza-layered-graph
+  data-url="https://raw.githubusercontent.com/microbiomedatahub/dataflow_prototype/refs/heads/main/testdata/layered_graph2.json"
+  data-type="json"
+  node-label_key="id"
+  nodes-sort-key="id"
+  nodes-sort-order="ascending"
+  node-size-key="group"
+  node-size-min="3"
+  node-size-max="6"
+  node-size-scale="sqrt"
+  node-color-key="group"
+  edge-width-key="value"
+  edge-width-min="0.5"
+  edge-width-max="3"
+  edge-width-scale="linear"
+  tooltips-key="id"
+  togostanza-custom_css_url=""
+></togostanza-layered-graph>

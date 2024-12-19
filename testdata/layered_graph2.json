@@ -1,0 +1,181 @@
+{
+  "nodes": [
+    {
+      "id": "PRJNA46877",
+      "group": 2
+    },
+    {
+      "id": "SAMN08378381",
+      "group": 3
+    },
+    {
+      "id": "GCA_005465875.1",
+      "group": 4
+    },
+    {
+      "id": "PRJNA46305",
+      "group": 1
+    },
+    {
+      "id": "PRJNA43021",
+      "group": 1
+    },
+    {
+      "id": "PRJNA162331",
+      "group": 1
+    },
+    {
+      "id": "PRJNA51443",
+      "group": 1
+    },
+    {
+      "id": "PRJNA74947",
+      "group": 1
+    },
+    {
+      "id": "SAMN03083653",
+      "group": 2
+    },
+    {
+      "id": "SAMN03083654",
+      "group": 2
+    },
+    {
+      "id": "SAMN03083652",
+      "group": 2
+    },
+    {
+      "id": "SAMN08378381",
+      "group": 2
+    },
+    {
+      "id": "SAMN08378382",
+      "group": 2
+    },
+    {
+      "id": "SAMN08432908",
+      "group": 2
+    },
+    {
+      "id": "SAMN08434424",
+      "group": 2
+    },
+    {
+      "id": "SAMN08434549",
+      "group": 2
+    },
+    {
+      "id": "SAMN08434571",
+      "group": 2
+    },
+    {
+      "id": "SAMN08439026",
+      "group": 2
+    },
+    {
+      "id": "SAMN35558468",
+      "group": 2
+    },
+    {
+      "id": "SAMN35559070",
+      "group": 2
+    }
+  ],
+  "links": [
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN08378381",
+      "value": 1
+    },
+    {
+      "source": "SAMN08378381",
+      "target": "GCA_005465875.1",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46305",
+      "target": "PRJNA46877",
+      "value": 1
+    },
+    {
+      "source": "PRJNA43021",
+      "target": "PRJNA46305",
+      "value": 1
+    },
+    {
+      "source": "PRJNA162331",
+      "target": "PRJNA43021",
+      "value": 1
+    },
+    {
+      "source": "PRJNA51443",
+      "target": "PRJNA46877",
+      "value": 1
+    },
+    {
+      "source": "PRJNA74947",
+      "target": "PRJNA46877",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN03083653",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN03083654",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN03083652",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN08378381",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN08378382",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN08432908",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN08434424",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN08434549",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN08434571",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN08439026",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN35558468",
+      "value": 1
+    },
+    {
+      "source": "PRJNA46877",
+      "target": "SAMN35559070",
+      "value": 1
+    }
+  ]
+}
