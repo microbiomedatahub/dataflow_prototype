@@ -35,7 +35,7 @@ def read_ko(url) -> list:
 
 def create_output_directory(root_path, mag_id) -> str:
     """
-    出力先のディレクトリを作成する
+    出力先のpathを生成する
     /hoge/hoge/public/genome/GCA/xxx
     ex. /hoge/hoge/public/genome/GCA/949/121/495/GCA_949121495.1
     ex. /hoge/hoge/public/genome/GCA/000/192/595/GCA_000192595.1
@@ -43,7 +43,7 @@ def create_output_directory(root_path, mag_id) -> str:
     """
     mag_id_str = re.sub(r"[_.]", "", mag_id)
     mag_id_lst = [mag_id_str[i:i+3] for i in range(0, len(mag_id_str), 3)]
-    output_path = f"{root_path}/{mag_id_lst[0]}/{mag_id_lst[1]}/{mag_id_lst[2]}/{mag_id_lst[3]}/{mag_id}"
+    output_path = f"{root_path}/{mag_id_lst[0]}/{mag_id_lst[1]}/{mag_id_lst[2]}/{mag_id_lst[3]}/{mag_id}/mgbd.json"
     return output_path
      
 
