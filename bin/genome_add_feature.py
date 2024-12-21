@@ -41,9 +41,9 @@ def main():
     b2f_file = args.feature
     jsonl_file = args.jsonl
     """
-    b2f_file  = '/Users/oec/Desktop/資料/mdatahub/data/2024_12_17-MAGごとのPHonotype_dataの例/mag_1000_B2F.txt'
-    jsonl_file = '/Users/oec/Desktop/資料/mdatahub/data/2024_12_17-MAGごとのPHonotype_dataの例/genome_jsonl_part_000'
-    output_file = '/Users/oec/Desktop/資料/mdatahub/data/2024_12_17-MAGごとのPHonotype_dataの例/genome_feature_part_000'
+    b2f_file  = './mag_1000_B2F.txt'
+    jsonl_file = './genome_jsonl_part_000'
+    output_file = './genome_feature_part_000'
     phenotype_dict = tsv2dict(b2f_file)
     write_jsonl = WriteJsonl(output_file)
     
