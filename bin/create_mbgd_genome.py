@@ -18,7 +18,8 @@ def read_csv(file_path) -> list:
         data = [row[0].split('\t') for row in reader]
     return data
 
-def read_ko(url) -> list:
+
+def read_ko(url) -> dict:
     """
     TXTファイルを読み込み、各行をリストに格納し先頭２要素をk:vとしたdictを返す
     """
@@ -30,6 +31,16 @@ def read_ko(url) -> list:
             lines.append(line.rstrip().split('\t'))
 
         data = {row[0]: row[1] for row in lines}
+    return data
+
+
+def read_description(file_path) -> list:
+    """
+    TSVファイルを読み込み先頭のIDをkeyとしてdescriptionをvalueとしたdictを返す
+    """
+    with open(file_path) as f:
+        reader = csv.reader(f, delimiter='\t')
+        data = {row[0]: row[1] for row in reader}
     return data
 
 
@@ -61,19 +72,23 @@ def main():
     # args = parser.parse_args()
     mags_path = "../testdata/test_mbgd_cluster.txt" 
     ko_url = "https://mbgd.nibb.ac.jp/tmp/microbedb/mbgd_kegg_xref_default.txt"
-    genome_root_path = "/work1/mdatahub/public/genome"
-    
+    genome_root_path = "/public/genome"
+    # clusterのdescriptinを追加
+    description_path = "public/dev/mbgdcluster.tsv"
 
     # CSVファイルを読み込み、各行を辞書型に変換してリストに格納する
     mag_list = read_csv(mags_path)
     ko_map = read_ko(ko_url)
+    # descrioption_mapは枝番を除いたclust idをkeyとするdict
+    description_map = read_description(description_path)
     # MAGの1レコードごとの処理
     for mag in mag_list:
         # MAG IDをパースする
         mag_id  = "_".join(mag[0].split("_")[0:2])
         # cluster idをカウントする
         cluster_id = mag[1:]
-        d = [{"id": k, "count": v, "ko": ko_map.get(k, ""), "description": ""} for k,v in Counter(cluster_id).items()]
+        d = [{"id": k, "count": v, "ko": ko_map.get(k, ""), "description": description_map.get( f"{k:.0f}","")} 
+             for k,v in Counter(cluster_id).items() if k != ""]
         # 出力先のディレクトリを作成し
         # マッピング結果をJSONL形式で出力する
         today = datetime.date.today()
