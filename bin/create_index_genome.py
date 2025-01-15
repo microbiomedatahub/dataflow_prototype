@@ -41,6 +41,7 @@ class BioSampleSet:
             'sample_host_organism': [],
             'sample_host_disease': [],
             'sample_host_location': [],
+            'sample_host_location_id': [],
             'data_size': '0.0 GB'
         }
 
@@ -136,8 +137,14 @@ class AssemblyReports:
             'description': row['excluded_from_refseq'],
             'data_type': 'Genome sequencing and assembly',
             'organization': row['submitter'],
+            'publication': [ { } ],
             'dateCreated': row['seq_rel_date'],
             'properties': row,
+            'dbXrefs': [],
+            'distribution': None,
+            'Download': None,
+            'status': "public",
+            'visibility': None,
             '_annotation': {}
         }
 
