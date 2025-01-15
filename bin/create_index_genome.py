@@ -158,13 +158,14 @@ class AssemblyReports:
         if os.path.exists(dfast_stats_path):
             with open(dfast_stats_path, 'r') as f:
                 stats = {line.split('\t')[0]: line.split('\t')[1].strip() for line in f}
-                annotation['_annotation']['dfast_stats'] = stats
+                annotation['_dfast'] = stats
 
         # DFASTQC結果から取得
         dfastqc_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'dfastqc', 'dqc_result.json')
         if os.path.exists(dfastqc_path):
             with open(dfastqc_path, 'r') as f:
                 dqc_data = json.load(f)
+                annotation['_dfastqc'] = dqc_data
                 annotation['_annotation'].update(dqc_data.get('cc_result', {}))
 
         # 配列ファイルから取得
@@ -176,8 +177,8 @@ class AssemblyReports:
         # 星（quality）計算
         contamination = annotation['_annotation'].get('contamination', 0)
         completeness = annotation['_annotation'].get('completeness', 0)
-        sequence_count = int(annotation['_annotation'].get('dfast_stats', {}).get('Number of Sequences', 0))
-        rrna_count = int(annotation['_annotation'].get('dfast_stats', {}).get('Number of rRNAs', 0))
+        sequence_count = int(annotation['_annotation'].get('_dfast', {}).get('Number of Sequences', 0))
+        rrna_count = int(annotation['_annotation'].get('_dfast', {}).get('Number of rRNAs', 0))
 
         star = 1
         if contamination < 10:
