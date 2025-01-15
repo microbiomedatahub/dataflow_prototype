@@ -4,7 +4,7 @@ import datetime
 from xml.etree import ElementTree as ET
 
 def asm_acc2path(asm_acc):
-    parts = asm_acc.replace("GCA_", "GCA").strip()
+    parts = asm_acc.replace("GCA_", "GCA").split(".")[0]
     return "/".join([parts[i:i+3] for i in range(0, len(parts), 3)])
 
 class BioSampleSet:
@@ -132,11 +132,15 @@ class AssemblyReports:
 
         # BioSample.xmlからメタデータ取得
         sample_xml_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], f"{row['biosample']}.xml")
-        if os.path.exists(sample_xml_path):
-            biosample_set = BioSampleSet(sample_xml_path)
-            annotation['_annotation'] = biosample_set.to_json_plus()
-        else:
-            annotation['_annotation'] = BioSampleSet('').json_plus_default()
+        try:
+            if os.path.exists(sample_xml_path):
+                biosample_set = BioSampleSet(sample_xml_path)
+                annotation['_annotation'] = biosample_set.to_json_plus()
+            else:
+                annotation['_annotation'] = BioSampleSet('').json_plus_default()
+        except Exception as e:
+            print(f"Error processing BioSample XML: {sample_xml_path}")
+            print(f"Exception: {e}")
 
         # DFAST結果から取得
         dfast_stats_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'dfast', 'statistics.txt')
