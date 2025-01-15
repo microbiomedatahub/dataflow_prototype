@@ -71,8 +71,11 @@ class BioSampleSet:
                 elif re.search("location", display_name, re.IGNORECASE):
                     annotation['sample_host_location'].append(value)
 
-        annotation['sample_ph_range'] = {"min": min(annotation['sample_ph'], default=0), "max": max(annotation['sample_ph'], default=0)}
-        annotation['sample_temperature_range'] = {"min": min(annotation['sample_temperature'], default=0), "max": max(annotation['sample_temperature'], default=0)}
+
+        annotation['sample_ph_range'] = {"min": min(annotation['sample_ph'], default=None), "max": max(annotation['sample_ph'], default=None)}
+        annotation['sample_temperature_range'] = {"min": min(annotation['sample_temperature'], default=None), "max": max(annotation['sample_temperature'], default=None)}
+        del annotation['sample_ph']
+        del annotation['sample_temperature']
         return annotation
 
 
