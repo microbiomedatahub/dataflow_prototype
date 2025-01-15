@@ -181,8 +181,8 @@ class AssemblyReports:
 
 
 # Usage example:
-input_path = "/path/to/input"
-output_path = "/path/to/output"
+input_path = "/work1/mdatahub/app/dataflow_prototype"
+output_path = "/work1/mdatahub/app/dataflow_prototype"
 
 reports = AssemblyReports(input_path, output_path)
 reports.parse_summary()
