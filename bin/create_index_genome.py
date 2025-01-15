@@ -124,6 +124,59 @@ class AssemblyReports:
             'dateCreated': row['seq_rel_date'],
             '_annotation': {}
         }
+
+        # BioSample.xmlからメタデータ取得
+        sample_xml_path = os.path.join(self.input_path, 'genomes', row['assembly_accession'], f"{row['biosample']}.xml")
+        if os.path.exists(sample_xml_path):
+            biosample_set = BioSampleSet(sample_xml_path)
+            annotation['_annotation'] = biosample_set.to_json_plus()
+        else:
+            annotation['_annotation'] = BioSampleSet('').json_plus_default()
+
+        # DFAST結果から取得
+        dfast_stats_path = os.path.join(self.input_path, 'genomes', row['assembly_accession'], 'dfast', 'statistics.txt')
+        if os.path.exists(dfast_stats_path):
+            with open(dfast_stats_path, 'r') as f:
+                stats = {line.split('\t')[0]: line.split('\t')[1].strip() for line in f}
+                annotation['_annotation']['dfast_stats'] = stats
+
+        # DFASTQC結果から取得
+        dfastqc_path = os.path.join(self.input_path, 'genomes', row['assembly_accession'], 'dfastqc', 'dqc_result.json')
+        if os.path.exists(dfastqc_path):
+            with open(dfastqc_path, 'r') as f:
+                dqc_data = json.load(f)
+                annotation['_annotation'].update(dqc_data.get('cc_result', {}))
+
+        # 配列ファイルから取得
+        genome_fna_path = os.path.join(self.input_path, 'genomes', row['assembly_accession'], 'genome.fna.gz')
+        if os.path.exists(genome_fna_path):
+            size = os.path.getsize(genome_fna_path) / (1024 * 1024)
+            annotation['_annotation']['data_size'] = f"{size:.2f} MB"
+
+        # 星（quality）計算
+        contamination = annotation['_annotation'].get('contamination', 0)
+        completeness = annotation['_annotation'].get('completeness', 0)
+        sequence_count = int(annotation['_annotation'].get('dfast_stats', {}).get('Number of Sequences', 0))
+        rrna_count = int(annotation['_annotation'].get('dfast_stats', {}).get('Number of rRNAs', 0))
+
+        star = 1
+        if contamination < 10:
+            star += 1
+        if completeness > 60:
+            star += 1
+        if sequence_count < 30:
+            star += 1
+        if rrna_count > 2:
+            star += 1
+
+        annotation['quality'] = star
+        annotation['quality_label'] = '⭐️' * star
+
+        # genome.json出力
+        genome_json_path = os.path.join(self.input_path, 'genomes', row['assembly_accession'], 'genome.json')
+        with open(genome_json_path, 'w') as genome_file:
+            json.dump(annotation, genome_file, indent=4)
+
         out.write(json.dumps(annotation) + '\n')
 
 
