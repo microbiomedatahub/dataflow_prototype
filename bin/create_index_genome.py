@@ -3,6 +3,10 @@ import json
 import datetime
 from xml.etree import ElementTree as ET
 
+def asm_acc2path(asm_acc):
+    parts = asm_acc.replace("GCA_", "GCA").strip()
+    return "/".join([parts[i:i+3] for i in range(0, len(parts), 3)])
+
 class BioSampleSet:
     def __init__(self, xml_file, params=None):
         self.xml_file = xml_file
@@ -127,7 +131,7 @@ class AssemblyReports:
         }
 
         # BioSample.xmlからメタデータ取得
-        sample_xml_path = os.path.join(self.genome_path, 'genomes', row['assembly_accession'], f"{row['biosample']}.xml")
+        sample_xml_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], f"{row['biosample']}.xml")
         if os.path.exists(sample_xml_path):
             biosample_set = BioSampleSet(sample_xml_path)
             annotation['_annotation'] = biosample_set.to_json_plus()
@@ -135,21 +139,21 @@ class AssemblyReports:
             annotation['_annotation'] = BioSampleSet('').json_plus_default()
 
         # DFAST結果から取得
-        dfast_stats_path = os.path.join(self.genome_path, 'genomes', row['assembly_accession'], 'dfast', 'statistics.txt')
+        dfast_stats_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'dfast', 'statistics.txt')
         if os.path.exists(dfast_stats_path):
             with open(dfast_stats_path, 'r') as f:
                 stats = {line.split('\t')[0]: line.split('\t')[1].strip() for line in f}
                 annotation['_annotation']['dfast_stats'] = stats
 
         # DFASTQC結果から取得
-        dfastqc_path = os.path.join(self.genome_path, 'genomes', row['assembly_accession'], 'dfastqc', 'dqc_result.json')
+        dfastqc_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'dfastqc', 'dqc_result.json')
         if os.path.exists(dfastqc_path):
             with open(dfastqc_path, 'r') as f:
                 dqc_data = json.load(f)
                 annotation['_annotation'].update(dqc_data.get('cc_result', {}))
 
         # 配列ファイルから取得
-        genome_fna_path = os.path.join(self.genome_path, 'genomes', row['assembly_accession'], 'genome.fna.gz')
+        genome_fna_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.fna.gz')
         if os.path.exists(genome_fna_path):
             size = os.path.getsize(genome_fna_path) / (1024 * 1024)
             annotation['_annotation']['data_size'] = f"{size:.2f} MB"
@@ -174,9 +178,10 @@ class AssemblyReports:
         annotation['quality_label'] = '⭐️' * star
 
         # genome.json出力
-        genome_json_path = os.path.join(self.genome_path, 'genomes', row['assembly_accession'], 'genome.json')
-        with open(genome_json_path, 'w') as genome_file:
-            json.dump(annotation, genome_file, indent=4)
+        genome_json_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.json')
+        #FIXME
+        #with open(genome_json_path, 'w') as genome_file:
+        #    json.dump(annotation, genome_file, indent=4)
 
         out.write(json.dumps(annotation) + '\n')
 
