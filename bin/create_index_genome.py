@@ -90,9 +90,10 @@ class BioSample:
 
 
 class AssemblyReports:
-    def __init__(self, input_path, output_path):
+    def __init__(self, input_path, output_path, genome_path):
         self.input_path = input_path
         self.output_path = output_path
+        self.genome_path = genome_path
         self.source = 'assembly_summary_genbank.txt'
 
     def parse_summary(self):
@@ -126,7 +127,7 @@ class AssemblyReports:
         }
 
         # BioSample.xmlからメタデータ取得
-        sample_xml_path = os.path.join(self.input_path, 'genomes', row['assembly_accession'], f"{row['biosample']}.xml")
+        sample_xml_path = os.path.join(self.genome_path, 'genomes', row['assembly_accession'], f"{row['biosample']}.xml")
         if os.path.exists(sample_xml_path):
             biosample_set = BioSampleSet(sample_xml_path)
             annotation['_annotation'] = biosample_set.to_json_plus()
@@ -134,21 +135,21 @@ class AssemblyReports:
             annotation['_annotation'] = BioSampleSet('').json_plus_default()
 
         # DFAST結果から取得
-        dfast_stats_path = os.path.join(self.input_path, 'genomes', row['assembly_accession'], 'dfast', 'statistics.txt')
+        dfast_stats_path = os.path.join(self.genome_path, 'genomes', row['assembly_accession'], 'dfast', 'statistics.txt')
         if os.path.exists(dfast_stats_path):
             with open(dfast_stats_path, 'r') as f:
                 stats = {line.split('\t')[0]: line.split('\t')[1].strip() for line in f}
                 annotation['_annotation']['dfast_stats'] = stats
 
         # DFASTQC結果から取得
-        dfastqc_path = os.path.join(self.input_path, 'genomes', row['assembly_accession'], 'dfastqc', 'dqc_result.json')
+        dfastqc_path = os.path.join(self.genome_path, 'genomes', row['assembly_accession'], 'dfastqc', 'dqc_result.json')
         if os.path.exists(dfastqc_path):
             with open(dfastqc_path, 'r') as f:
                 dqc_data = json.load(f)
                 annotation['_annotation'].update(dqc_data.get('cc_result', {}))
 
         # 配列ファイルから取得
-        genome_fna_path = os.path.join(self.input_path, 'genomes', row['assembly_accession'], 'genome.fna.gz')
+        genome_fna_path = os.path.join(self.genome_path, 'genomes', row['assembly_accession'], 'genome.fna.gz')
         if os.path.exists(genome_fna_path):
             size = os.path.getsize(genome_fna_path) / (1024 * 1024)
             annotation['_annotation']['data_size'] = f"{size:.2f} MB"
@@ -173,7 +174,7 @@ class AssemblyReports:
         annotation['quality_label'] = '⭐️' * star
 
         # genome.json出力
-        genome_json_path = os.path.join(self.input_path, 'genomes', row['assembly_accession'], 'genome.json')
+        genome_json_path = os.path.join(self.genome_path, 'genomes', row['assembly_accession'], 'genome.json')
         with open(genome_json_path, 'w') as genome_file:
             json.dump(annotation, genome_file, indent=4)
 
@@ -183,6 +184,7 @@ class AssemblyReports:
 # Usage example:
 input_path = "/work1/mdatahub/app/dataflow_prototype"
 output_path = "/work1/mdatahub/app/dataflow_prototype"
+genome_path = "/work1/mdatahub/public/genome"
 
-reports = AssemblyReports(input_path, output_path)
+reports = AssemblyReports(input_path, output_path, genome_path)
 reports.parse_summary()
