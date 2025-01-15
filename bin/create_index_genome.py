@@ -127,6 +127,7 @@ class AssemblyReports:
             'data_type': 'Genome sequencing and assembly',
             'organization': row['submitter'],
             'dateCreated': row['seq_rel_date'],
+            'properties': row,
             '_annotation': {}
         }
 
