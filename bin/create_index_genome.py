@@ -55,11 +55,11 @@ class BioSampleSet:
                 value = attr['value']
                 display_name = attr['display_name']
                 
-                if display_name in ["pH", "soil pH", "water pH"]:
+                if display_name in ["pH", "soil pH", "water pH", "fermentation pH" ,"surface moisture pH","wastewater pH"]:
                     val = ''.join(filter(str.isdigit, value))
                     if val:
                         annotation['sample_ph'].append(float(val))
-                elif display_name in ["temperature", "air temperature"]:
+                elif display_name in ["air temperature","annual and seasonal temperature","average temperature","depth (TVDSS) of hydrocarbon resource temperature","dew point","fermentation temperature","food stored by consumer (storage temperature)","host body temperature","hydrocarbon resource original temperature","mean annual temperature","mean seasonal temperature","pour point","sample storage temperature","sample transport temperature","soil temperature","study incubation temperature","surface temperature","temperature","temperature outside house","wastewater temperature"]:
                     val = ''.join(filter(str.isdigit, value))
                     if val:
                         annotation['sample_temperature'].append(float(val))
