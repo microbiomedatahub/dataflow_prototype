@@ -39,6 +39,7 @@ class BioSampleSet:
             'sample_ph': [],
             'sample_temperature': [],
             'sample_host_organism': [],
+            'sample_host_organism_id': [],
             'sample_host_disease': [],
             'sample_host_location': [],
             'sample_host_location_id': [],
@@ -135,17 +136,21 @@ class AssemblyReports:
             'identifier': row['assembly_accession'],
             'organism': row['organism_name'],
             'description': row['excluded_from_refseq'],
-            'data_type': 'Genome sequencing and assembly',
+            'data type': 'Genome sequencing and assembly',
             'organization': row['submitter'],
             'publication': [ { } ],
-            'dateCreated': row['seq_rel_date'],
             'properties': row,
             'dbXrefs': [],
             'distribution': None,
             'Download': None,
-            'status': "public",
+            'status': 'public',
             'visibility': None,
-            '_annotation': {}
+            'dateCreated': row['seq_rel_date'].replace("/", "-"),
+            'dateModified': row['seq_rel_date'].replace("/", "-"),
+            'datePublished': row['seq_rel_date'].replace("/", "-"),
+            '_annotation': {},
+            'data_type': 'MAG',
+            'data_source': 'INSDC' 
         }
 
         # BioSample.xmlからメタデータ取得
@@ -174,12 +179,19 @@ class AssemblyReports:
                 dqc_data = json.load(f)
                 annotation['_dfastqc'] = dqc_data
                 annotation['_annotation'].update(dqc_data.get('cc_result', {}))
+                annotation['has_analysis'] = True
+        else:
+            annotation['_dfastqc'] = {}
+            annotation['has_analysis'] = False
 
         # 配列ファイルから取得
         genome_fna_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.fna.gz')
         if os.path.exists(genome_fna_path):
             size = os.path.getsize(genome_fna_path) / (1024 * 1024)
             annotation['_annotation']['data_size'] = f"{size:.2f} MB"
+
+        genome_count = 1
+        annotation['_annotation']['genome_count'] = genome_count
 
         # 星（quality）計算
         contamination = annotation['_annotation'].get('contamination', 0)
