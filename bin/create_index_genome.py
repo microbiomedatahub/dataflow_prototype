@@ -1,6 +1,7 @@
 import os
 import json
 import datetime
+import re
 from xml.etree import ElementTree as ET
 
 def asm_acc2path(asm_acc):
@@ -63,6 +64,12 @@ class BioSampleSet:
                     val = ''.join(filter(str.isdigit, value))
                     if val:
                         annotation['sample_temperature'].append(float(val))
+                elif display_name == "host":
+                    annotation['sample_host_organism'].append(value)
+                elif display_name in ["disease","fetal health status", "host disease", "health","health status","host health state","host of the symbiotic host disease status","outbreak","study disease"]:
+                    annotation['sample_host_disease'].append(value)
+                elif re.search("location", display_name, re.IGNORECASE):
+                    annotation['sample_host_location'].append(value)
 
         annotation['sample_ph_range'] = {"min": min(annotation['sample_ph'], default=0), "max": max(annotation['sample_ph'], default=0)}
         annotation['sample_temperature_range'] = {"min": min(annotation['sample_temperature'], default=0), "max": max(annotation['sample_temperature'], default=0)}
