@@ -20,8 +20,8 @@ class WriteJsonl:
     def __init__(self, output_file):
         self.output_file = output_file
     def write_jsonl(self, jsonl):
-        with open(self.output_file, 'a') as f:
-            f.write(json.dumps(jsonl) + '\n')
+        with open(self.output_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(jsonl, ensure_ascii=False) + '\n')
 
 def main():
     """
@@ -48,7 +48,7 @@ def main():
     write_jsonl = WriteJsonl(output_file)
     
     # ローカルにおかれたjsonlファイルを取得
-    with open(jsonl_file) as f:
+    with open(jsonl_file, 'r', encoding='utf-8') as f:
         records = f.readlines()
         for i, record in enumerate(records):
             dct = json.loads(record)
@@ -72,7 +72,15 @@ def main():
 def get_additional_data(phenotype, mag_id):
     d = phenotype.get(mag_id)
     if d:
-        d.pop("MAG_ID")
+        id = d.pop("MAG_ID")
+        for key, value in d.items():
+            try:
+                num = float(value)
+                rounded_num = round(num, 3)
+                d[key] = rounded_num
+            except ValueError:
+                d[key] = value
+                #print(f"値 '{value}' は数値に変換できません。{id}")
         return {"_bac2feature": d}
     else:
         return {}
