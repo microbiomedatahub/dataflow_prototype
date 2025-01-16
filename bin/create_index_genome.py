@@ -119,12 +119,35 @@ class BioSample:
         return attributes
 
 
+class Bac2Feature:
+    def __init__(self, b2f_path):
+        d = {}
+        with open (b2f_path, 'r') as f:
+            reader = csv.DictReader(f, delimiter='\t')
+            for row in reader:
+                d.update({row["MAG_ID"]: row })
+        self.b2f_dict = d
+
+    def get_b2f(self,mag_id):
+        d = self.b2f_dict.get(mag_id)
+        for key, value in d.items():
+            try:
+                num = float(value)
+                rounded_num = round(num, 3)
+                d[key] = rounded_num
+            except ValueError:
+                d[key] = value
+        return d
+
+
+
 class AssemblyReports:
     def __init__(self, input_path, output_path, genome_path):
         self.input_path = input_path
         self.output_path = output_path
         self.genome_path = genome_path
         self.source = 'assembly_summary_genbank.txt'
+        self.b2f = Bac2Feature('/work1/mdatahub/public/dev/20241221_All_predicted_traits.txt')
 
     def parse_summary(self):
         source_file = os.path.join(self.input_path, 'genomes/ASSEMBLY_REPORTS', self.source)
@@ -207,6 +230,10 @@ class AssemblyReports:
 
         genome_count = 1
         annotation['_annotation']['genome_count'] = genome_count
+
+
+        # Bac2Featureから取得
+        annottation['_bac2feature'] = self.b2f.get_b2f(row['assembly_accession'])
 
         # 星（quality）計算
         contamination = annotation['_annotation'].get('contamination', 0)
