@@ -98,7 +98,7 @@ def process_assembly_summary(file_path):
             relation_to_type_material = columns[21] if len(columns) > 21 else ""
 
             # Check the condition for relation_to_type_material
-            if relation_to_type_material == "" or not relation_to_type_material.startswith("ICTV"):
+            if relation_to_type_material.startswith("assembly"):
                 create_genome_directory(genome_id)
                 download_genomic_file(genome_id, genome_url)
                 fetch_biosample_metadata(biosample_id, genome_id)
@@ -106,6 +106,6 @@ def process_assembly_summary(file_path):
 # Example usage
 # wget -O assembly_summary_refseq-20250116.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
 # ln -s assembly_summary_refseq-20250116.txt assembly_summary_refseq.txt
-assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"  # Replace with actual downloaded file path
-#assembly_summary_path = "assembly_summary_refseq.txt"
+#assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"  # Replace with actual downloaded file path
+assembly_summary_path = "assembly_summary_refseq.txt"
 process_assembly_summary(assembly_summary_path)
