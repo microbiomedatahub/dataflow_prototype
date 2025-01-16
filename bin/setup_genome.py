@@ -51,13 +51,18 @@ def download_genomic_file(genome_id, genome_url):
     download_path = os.path.join(target_dir, renamed_file_name)
 
     # Construct the full URL to the file
-    file_url = genome_url + original_file_name
+    file_url = genome_url.rstrip("/") + "/" + original_file_name
 
     # Download the file if it does not already exist
     if not os.path.exists(download_path):
-        print(f"Downloading {file_url} to {download_path}...")
-        urllib.request.urlretrieve(file_url, download_path)
-        print(f"Download completed and saved as {download_path}")
+        try:
+            print(f"Downloading {file_url} to {download_path}...")
+            urllib.request.urlretrieve(file_url, download_path)
+            print(f"Download completed and saved as {download_path}")
+        except urllib.error.HTTPError as e:
+            print(f"HTTP Error: {e.code} while downloading {file_url}")
+        except urllib.error.URLError as e:
+            print(f"URL Error: {e.reason} while accessing {file_url}")
     else:
         print(f"File already exists: {download_path}")
 
@@ -102,4 +107,5 @@ def process_assembly_summary(file_path):
 # wget -O assembly_summary_refseq-20250116.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
 # ln -s assembly_summary_refseq-20250116.txt assembly_summary_refseq.txt
 assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"  # Replace with actual downloaded file path
+#assembly_summary_path = "assembly_summary_refseq.txt"
 process_assembly_summary(assembly_summary_path)
