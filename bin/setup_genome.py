@@ -81,9 +81,25 @@ def fetch_biosample_metadata(biosample_id, genome_id):
     else:
         print(f"Metadata file already exists: {xml_file_path}")
 
+def process_assembly_summary(file_path):
+    with open(file_path, 'r') as file:
+        for line in file:
+            if line.startswith("#"):
+                continue
+            columns = line.strip().split("\t")
+            genome_id = columns[0]
+            biosample_id = columns[2]
+            genome_url = columns[19]
+            relation_to_type_material = columns[21] if len(columns) > 21 else ""
+
+            # Check the condition for relation_to_type_material
+            if relation_to_type_material == "" or not relation_to_type_material.startswith("ICTV"):
+                create_genome_directory(genome_id)
+                download_genomic_file(genome_id, genome_url)
+                fetch_biosample_metadata(biosample_id, genome_id)
+
 # Example usage
-genome_id = "GCF_963396225.1"
-genome_url = "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/963/396/225/GCF_963396225.1_CCUG_23930_T/"
-download_genomic_file(genome_id, genome_url)
-biosample_id = "SAMEA678330"
-fetch_biosample_metadata(biosample_id, genome_id)
+# wget -O assembly_summary_refseq-20250116.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
+# ln -s assembly_summary_refseq-20250116.txt assembly_summary_refseq.txt
+assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"  # Replace with actual downloaded file path
+process_assembly_summary(assembly_summary_path)
