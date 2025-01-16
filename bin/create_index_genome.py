@@ -3,6 +3,7 @@ import json
 import csv
 import datetime
 import re
+import math
 import argparse
 from xml.etree import ElementTree as ET
 import urllib.request
@@ -137,11 +138,14 @@ class Bac2Feature:
         d = self.b2f_dict.get(mag_id)
         for key, value in d.items():
             try:
-                num = float(value)
-                rounded_num = round(num, 3)
-                d[key] = rounded_num
+                if isinstance(value, (int, float)):
+                    num = float(value)
+                    rounded_num = round(num, 3)
+                    d[key] = rounded_num
+                else:
+                    d[key] = None
             except ValueError:
-                d[key] = value
+                d[key] = None
         return d
 
 
@@ -163,7 +167,17 @@ class BulkInsert:
             response_data = json.loads(res.read().decode('utf-8'))
             # print(response_data)
             # TODO: エラーを検出しlogファイルに残す処理があると良い
+            log_str = json.dumps(response_data)
+            word = "exception"
+            if word in log_str:
+                logs(log_str)
 
+
+def logs(message: str):
+    #dir_name = os.path.dirname(args.output)
+    log_file = "bulkinsert_error_log.txt"
+    with open(log_file, "a") as f:
+        f.write(message  + "\n")
 
 
 class AssemblyReports:
@@ -175,7 +189,7 @@ class AssemblyReports:
         self.b2f = Bac2Feature('/work1/mdatahub/public/dev/20241221_All_predicted_traits.txt')
         # TODO: urlはコマンド引数もしくは環境変数にする
         self.bulkinsert = BulkInsert(bulk_api)
-        self.batch_size = 5
+        self.batch_size = 1000
 
 
     def parse_summary(self):
@@ -205,7 +219,6 @@ class AssemblyReports:
                     if doc:
                         docs.append(doc)
                         l += 1
-                        m += 1
                         if l > self.batch_size:
                             self.bulkinsert.insert(docs)
                             docs = []
