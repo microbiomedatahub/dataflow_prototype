@@ -41,6 +41,7 @@ class BioSampleSet:
             'sample_host_organism': [],
             'sample_host_organism_id': [],
             'sample_host_disease': [],
+            'sample_host_disease_id': [],
             'sample_host_location': [],
             'sample_host_location_id': [],
             'data_size': '0.0 GB'
@@ -93,6 +94,19 @@ class BioSample:
     def taxid(self):
         return self.xml_node.find('Description/Organism').attrib.get('taxonomy_id', '')
 
+    @property
+    def title(self):
+        bs = self.xml_node.find('BioSample')
+        try:
+            bs_id = bs.attrib['id']
+        except:
+            bs_id = None
+        if bs_id:
+            return self.xml_node.find('Description/SampleName').text 
+
+        else:
+            return self.xml_node.find('Description/Title').text
+
     def sample_attributes(self):
         attributes = []
         for attr in self.xml_node.findall('Attributes/Attribute'):
@@ -135,6 +149,7 @@ class AssemblyReports:
             'type': 'genome',
             'identifier': row['assembly_accession'],
             'organism': row['organism_name'],
+            'title': row['organism_name'],
             'description': row['excluded_from_refseq'],
             'data type': 'Genome sequencing and assembly',
             'organization': row['submitter'],
@@ -177,18 +192,18 @@ class AssemblyReports:
         if os.path.exists(dfastqc_path):
             with open(dfastqc_path, 'r') as f:
                 dqc_data = json.load(f)
+                annotation['has_analysis'] = True
                 annotation['_dfastqc'] = dqc_data
                 annotation['_annotation'].update(dqc_data.get('cc_result', {}))
-                annotation['has_analysis'] = True
         else:
-            annotation['_dfastqc'] = {}
             annotation['has_analysis'] = False
+            annotation['_dfastqc'] = {}
 
         # 配列ファイルから取得
         genome_fna_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.fna.gz')
         if os.path.exists(genome_fna_path):
             size = os.path.getsize(genome_fna_path) / (1024 * 1024)
-            annotation['_annotation']['data_size'] = f"{size:.2f} MB"
+            annotation['_annotation']['data_size'] = f"{size:.3f} MB"
 
         genome_count = 1
         annotation['_annotation']['genome_count'] = genome_count
