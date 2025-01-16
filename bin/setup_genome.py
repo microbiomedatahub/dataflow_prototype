@@ -4,18 +4,20 @@ import subprocess
 import json
 import base64
 import time
+import gzip
+import shutil
 from typing import Any, Dict, Optional
-#from dotenv import load_dotenv
+
+# from dotenv import load_dotenv
 
 # Load environment variables from .env file
-#load_dotenv()
+# load_dotenv()
 
 def asm_acc2path(asm_acc):
     parts = asm_acc.replace("GCF_", "GCF").split(".")[0]
     return "/".join([parts[i:i+3] for i in range(0, len(parts), 3)])
 
 def create_genome_directory(genome_id):
-    #print(f"Creating directory for genome_id: {genome_id}")
     os.environ['MDATAHUB_PATH_GENOME'] = '/work1/mdatahub/public/genome'
     base_path = os.getenv('MDATAHUB_PATH_GENOME')
     if not genome_id.startswith("GCF_") or len(genome_id.split(".")) != 2:
@@ -29,24 +31,38 @@ def create_genome_directory(genome_id):
 
 def download_genomic_file(genome_id, genome_url):
     original_file_name = genome_url.rstrip("/").split("/")[-1] + "_genomic.fna.gz"
-    renamed_file_name = "genome.fna.gz"
+    compressed_file_name = "genome.fna.gz"
+    uncompressed_file_name = "genome.fna"
     print(f"Downloading file for genome_id: {genome_id}")
     target_dir = create_genome_directory(genome_id)
-    download_path = os.path.join(target_dir, renamed_file_name)
+    compressed_path = os.path.join(target_dir, compressed_file_name)
+    uncompressed_path = os.path.join(target_dir, uncompressed_file_name)
     file_url = genome_url.rstrip("/") + "/" + original_file_name
-    if not os.path.exists(download_path):
+
+    # Download the file if not exists
+    if not os.path.exists(compressed_path):
         try:
-            print(f"Downloading {file_url} to {download_path}...")
-            urllib.request.urlretrieve(file_url, download_path)
-            print(f"Download completed and saved as {download_path}")
+            print(f"Downloading {file_url} to {compressed_path}...")
+            urllib.request.urlretrieve(file_url, compressed_path)
+            print(f"Download completed and saved as {compressed_path}")
         except urllib.error.HTTPError as e:
             print(f"HTTP Error: {e.code} while downloading {file_url}")
         except urllib.error.URLError as e:
             print(f"URL Error: {e.reason} while accessing {file_url}")
-    return f"https://mdatahub.org/public/genome/{asm_acc2path(genome_id)}/{genome_id}/genome.fna.gz"
+
+    # Uncompress the file if not exists
+    if not os.path.exists(uncompressed_path):
+        try:
+            with gzip.open(compressed_path, 'rb') as f_in:
+                with open(uncompressed_path, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            print(f"File decompressed to {uncompressed_path}")
+        except Exception as e:
+            print(f"Failed to decompress {compressed_path}: {e}")
+
+    return f"https://mdatahub.org/public/genome/{asm_acc2path(genome_id)}/{genome_id}/genome.fna"
 
 def fetch_biosample_metadata(biosample_id, genome_id):
-    #print(f"Fetching metadata for genome_id: {genome_id}")
     target_dir = create_genome_directory(genome_id)
     xml_file_path = os.path.join(target_dir, f"{biosample_id}.xml")
     if not os.path.exists(xml_file_path):
@@ -146,5 +162,6 @@ def process_assembly_summary(file_path):
 # Example usage
 # wget -O assembly_summary_refseq-20250116.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
 # ln -s assembly_summary_refseq-20250116.txt assembly_summary_refseq.txt
+
 assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
 process_assembly_summary(assembly_summary_path)
