@@ -3,7 +3,11 @@ import json
 import csv
 import datetime
 import re
+import argparse
 from xml.etree import ElementTree as ET
+import urllib.request
+import urllib.parse
+
 
 def asm_acc2path(asm_acc):
     parts = asm_acc.replace("GCA_", "GCA").split(".")[0]
@@ -126,7 +130,7 @@ class Bac2Feature:
         with open (b2f_path, 'r') as f:
             reader = csv.DictReader(f, delimiter='\t')
             for row in reader:
-                d.update({row["MAG_ID"]: row })
+                d.update({row['MAG_ID']: row })
         self.b2f_dict = d
 
     def get_b2f(self,mag_id):
@@ -141,14 +145,38 @@ class Bac2Feature:
         return d
 
 
+class BulkInsert:
+    def __init__(self, url):
+        self.es_url = url
+    def insert(self,docs):
+        insert_lst = []
+        for doc in docs:
+            try:
+                insert_lst.append({'index': {'_index': 'genome', '_id': doc['identifier']}})
+                insert_lst.append(doc)
+            except:
+                print("cant open doc: ")
+        post_data = "\n".join(json.dumps(d) for d in insert_lst) + "\n"
+        headers = {"Content-Type": "application/x-ndjson"}
+        req = urllib.request.Request(self.es_url, data=post_data.encode('utf-8'),headers=headers)
+        with urllib.request.urlopen(req) as res:
+            response_data = json.loads(res.read().decode('utf-8'))
+            # print(response_data)
+            # TODO: エラーを検出しlogファイルに残す処理があると良い
+
+
 
 class AssemblyReports:
-    def __init__(self, input_path, output_path, genome_path):
+    def __init__(self, input_path, output_path, genome_path, bulk_api):
         self.input_path = input_path
         self.output_path = output_path
         self.genome_path = genome_path
         self.source = 'assembly_summary_genbank.txt'
         self.b2f = Bac2Feature('/work1/mdatahub/public/dev/20241221_All_predicted_traits.txt')
+        # TODO: urlはコマンド引数もしくは環境変数にする
+        self.bulkinsert = BulkInsert(bulk_api)
+        self.batch_size = 5
+
 
     def parse_summary(self):
         source_file = os.path.join(self.input_path, 'genomes/ASSEMBLY_REPORTS', self.source)
@@ -157,6 +185,7 @@ class AssemblyReports:
         with open(source_file, 'r', encoding='utf-8') as f:
             headers = []
             lines = f.readlines()
+            """ deprecated. output_fileに書き出す場合はこちらから呼び出す
             with open(output_file, 'w') as out:
                 for i, line in enumerate(lines):
                     if i == 1:
@@ -164,11 +193,32 @@ class AssemblyReports:
                     elif i > 1:
                         data = dict(zip(headers, line.strip().split('\t')))
                         self.process_row(data, out)
+            """
+            l = 0
+            docs = []
+            for i, line in enumerate(lines):
+                if i == 1:
+                    headers = line.strip('#').strip().split('\t')
+                elif i > 1:
+                    data = dict(zip(headers, line.strip().split('\t')))
+                    doc = self.process_row(data)
+                    if doc:
+                        docs.append(doc)
+                        l += 1
+                        m += 1
+                        if l > self.batch_size:
+                            self.bulkinsert.insert(docs)
+                            docs = []
+                            l = 0
+            if len(docs) > 0:
+                self.bulkinsert.insert(docs)
 
-    def process_row(self, row, out):
+                    
+
+    #def process_row(self, row, out):
+    def process_row(self, row):
         if 'derived from metagenome' not in row.get('excluded_from_refseq', ''):
             return
-
         annotation = {
             'type': 'genome',
             'identifier': row['assembly_accession'],
@@ -235,6 +285,7 @@ class AssemblyReports:
 
         # Bac2Featureから取得
         annotation['_bac2feature'] = self.b2f.get_b2f(row['assembly_accession'])
+        del annotation['_bac2feature']['MAG_ID']
 
         # 星（quality）計算
         contamination = annotation['_annotation'].get('contamination', 0)
@@ -255,19 +306,24 @@ class AssemblyReports:
         annotation['quality'] = star
         annotation['quality_label'] = '⭐️' * star
 
+
         # genome.json出力
         genome_json_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.json')
         #FIXME
         #with open(genome_json_path, 'w') as genome_file:
         #    json.dump(annotation, genome_file, indent=4)
 
-        out.write(json.dumps(annotation) + '\n')
-
+        # deprecated
+        # ESに直接insertするのでjsonlを作らない
+        # out.write(json.dumps(annotation) + '\n')
+        return annotation
 
 # Usage example:
 input_path = "/work1/mdatahub/app/dataflow_prototype"
 output_path = "/work1/mdatahub/app/dataflow_prototype"
 genome_path = "/work1/mdatahub/public/genome"
+# TODO: argparse or dotenv利用
+es_bulk_api = 'http://localhost:9201/_bulk'
 
-reports = AssemblyReports(input_path, output_path, genome_path)
+reports = AssemblyReports(input_path, output_path, genome_path, es_bulk_api)
 reports.parse_summary()
