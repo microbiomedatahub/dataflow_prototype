@@ -11,7 +11,8 @@ def create_genome_directory(genome_id):
     print(f"Creating directory for genome_id: {genome_id}")
 
     # Set the environment variable for the base path
-    os.environ['MDATAHUB_PATH_GENOME'] = '/tmp/genome'
+    #os.environ['MDATAHUB_PATH_GENOME'] = '/tmp/genome'
+    os.environ['MDATAHUB_PATH_GENOME'] = '/work1/mdatahub/public/genome'
 
     # Get the base path from the environment variable
     base_path = os.getenv('MDATAHUB_PATH_GENOME')
@@ -106,6 +107,6 @@ def process_assembly_summary(file_path):
 # Example usage
 # wget -O assembly_summary_refseq-20250116.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
 # ln -s assembly_summary_refseq-20250116.txt assembly_summary_refseq.txt
-#assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"  # Replace with actual downloaded file path
-assembly_summary_path = "assembly_summary_refseq.txt"
+assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"  # Replace with actual downloaded file path
+#assembly_summary_path = "assembly_summary_refseq.txt"
 process_assembly_summary(assembly_summary_path)
