@@ -234,7 +234,7 @@ class AssemblyReports:
 
 
         # Bac2Featureから取得
-        annottation['_bac2feature'] = self.b2f.get_b2f(row['assembly_accession'])
+        annotation['_bac2feature'] = self.b2f.get_b2f(row['assembly_accession'])
 
         # 星（quality）計算
         contamination = annotation['_annotation'].get('contamination', 0)
