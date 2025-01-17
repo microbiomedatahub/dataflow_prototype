@@ -134,19 +134,24 @@ class Bac2Feature:
                 d.update({row['MAG_ID']: row })
         self.b2f_dict = d
 
+
     def get_b2f(self,mag_id):
-        d = self.b2f_dict.get(mag_id)
-        for key, value in d.items():
-            try:
-                if isinstance(value, (int, float)):
-                    num = float(value)
-                    rounded_num = round(num, 3)
-                    d[key] = rounded_num
-                else:
+        d = self.b2f_dict.get(mag_id, None)
+        if d is None:
+            return None
+        else:
+            for key, value in d.items():
+                try:
+                    if isinstance(value, (int, float)):
+                        num = float(value)
+                        rounded_num = round(num, 3)
+                        d[key] = rounded_num
+                    else:
+                        d[key] = None
+                except ValueError:
                     d[key] = None
-            except ValueError:
-                d[key] = None
-        return d
+            del d['MAG_ID']
+            return d
 
 
 class BulkInsert:
@@ -213,7 +218,6 @@ class AssemblyReports:
                             l = 0
             if len(docs) > 0:
                 self.bulkinsert.insert(docs)
-
                     
 
     #def process_row(self, row, out):
@@ -293,11 +297,9 @@ class AssemblyReports:
         genome_count = 1
         annotation['_annotation']['genome_count'] = genome_count
 
-
         # Bac2Featureから取得
         annotation['_bac2feature'] = self.b2f.get_b2f(row['assembly_accession'])
-        del annotation['_bac2feature']['MAG_ID']
-
+        
         # 星（quality）計算
         contamination = annotation['_annotation'].get('contamination', 0)
         completeness = annotation['_annotation'].get('completeness', 0)
