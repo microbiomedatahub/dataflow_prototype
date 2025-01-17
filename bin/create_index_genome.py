@@ -246,7 +246,7 @@ class AssemblyReports:
             return
 
         # dateのフォーマットをgenbankのフォーマットに変換
-        row['seq_rel_date'] = row.get('seq_rel_date').replace("-", "/") 
+        row['seq_rel_date'] = row['seq_rel_date'].replace("-", "/") 
         # TODO: data_type, data_sourceはソースによって値が変わる
 
         annotation = {
@@ -268,8 +268,8 @@ class AssemblyReports:
             'dateModified': row['seq_rel_date'].replace("/", "-"),
             'datePublished': row['seq_rel_date'].replace("/", "-"),
             '_annotation': {},
-            'data_type': 'MAG',
-            'data_source': 'INSDC' 
+            'data_type': data_type,
+            'data_source': data_source
         }
 
         # BioSample.xmlからメタデータ取得
