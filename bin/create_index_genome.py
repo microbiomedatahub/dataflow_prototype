@@ -224,15 +224,15 @@ class AssemblyReports:
     def process_row(self, row):
         # row['assembly_accession'] のプレフィックスがGCAの場合
         if row['assembly_accession'].startswith('GCA'):
+            data_type = "MAG"
+            data_source = "INSDC"
             if 'derived from metagenome' not in row.get('excluded_from_refseq', ''):
-                data_type = "MAG"
-                data_source = "INSDC"
                 return
         # row['assembly_accession'] のプレフィックスがGCFの場合                
         elif row['assembly_accession'].startswith('GCF'):
+            data_type = "G"
+            data_source = "RefSeq"
             if not row['relation_to_type_material'].startswith("assembly"):
-                data_type = "G"
-                data_source = "RefSeq"
                 return
         else:
         # TODO: MGnify対応
