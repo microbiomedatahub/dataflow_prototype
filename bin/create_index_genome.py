@@ -237,7 +237,7 @@ class AssemblyReports:
             'title': row['organism_name'],
             'description': row['excluded_from_refseq'],
             'data type': 'Genome sequencing and assembly',
-            'organization': row['submitter'],
+            'organization': row.get('submitter', row.get('asm_submitter')),
             'publication': [ { } ],
             'properties': row,
             'dbXrefs': [],
