@@ -321,15 +321,18 @@ class AssemblyReports:
         sequence_count = int(annotation['_annotation'].get('_dfast', {}).get('Number of Sequences', 0))
         rrna_count = int(annotation['_annotation'].get('_dfast', {}).get('Number of rRNAs', 0))
 
-        star = 1
-        if contamination < 10:
-            star += 1
-        if completeness > 60:
-            star += 1
-        if 0 < sequence_count < 30:
-            star += 1
-        if rrna_count > 2:
-            star += 1
+        if annotation['has_analysis']:
+            star = 1
+            if contamination < 10:
+                star += 1
+            if completeness > 60:
+                star += 1
+            if 0 < sequence_count < 30:
+                star += 1
+            if rrna_count > 2:
+                star += 1
+        else:
+            star = 0
 
         annotation['quality'] = star
         annotation['quality_label'] = '⭐️' * star
