@@ -181,11 +181,11 @@ def logs(message: str):
 
 
 class AssemblyReports:
-    def __init__(self, input_path, output_path, genome_path, bulk_api):
-        self.input_path = input_path
+    def __init__(self, summary_path, output_path, genome_path, bulk_api):
+        self.summary_path = summary_path
         self.output_path = output_path
         self.genome_path = genome_path
-        self.source = 'assembly_summary_genbank.txt'
+        #self.source = 'assembly_summary_genbank.txt'
         self.b2f = Bac2Feature('/work1/mdatahub/public/dev/20241221_All_predicted_traits.txt')
         # TODO: urlはコマンド引数もしくは環境変数にする
         self.bulkinsert = BulkInsert(bulk_api)
@@ -193,10 +193,9 @@ class AssemblyReports:
 
 
     def parse_summary(self):
-        source_file = os.path.join(self.input_path, 'genomes/ASSEMBLY_REPORTS', self.source)
         output_file = os.path.join(self.output_path, f'mdatahub_index_genome-{datetime.date.today()}.jsonl-togo')
 
-        with open(source_file, 'r', encoding='utf-8') as f:
+        with open(self.summary_path, 'r', encoding='utf-8') as f:
             headers = []
             lines = f.readlines()
             """ deprecated. output_fileに書き出す場合はこちらから呼び出す
@@ -332,11 +331,11 @@ class AssemblyReports:
         return annotation
 
 # Usage example:
-input_path = "/work1/mdatahub/app/dataflow_prototype"
+summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
 output_path = "/work1/mdatahub/app/dataflow_prototype"
 genome_path = "/work1/mdatahub/public/genome"
 # TODO: argparse or dotenv利用
 es_bulk_api = 'http://localhost:9201/_bulk'
 
-reports = AssemblyReports(input_path, output_path, genome_path, es_bulk_api)
+reports = AssemblyReports(summary_path, output_path, genome_path, es_bulk_api)
 reports.parse_summary()
