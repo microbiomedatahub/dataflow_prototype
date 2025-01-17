@@ -218,8 +218,18 @@ class AssemblyReports:
 
     #def process_row(self, row, out):
     def process_row(self, row):
-        if 'derived from metagenome' not in row.get('excluded_from_refseq', ''):
+        # row['assembly_accession'] のプレフィックスがGCAの場合
+        if row['assembly_accession'].startswith('GCA'):
+            if 'derived from metagenome' not in row.get('excluded_from_refseq', ''):
+                return
+        # row['assembly_accession'] のプレフィックスがGCFの場合                
+        elif row['assembly_accession'].startswith('GCF'):
+            if not row['relation_to_type_material'].startswith("assembly"):
+                return
+        else:
+        # TODO: MGnify対応
             return
+
         annotation = {
             'type': 'genome',
             'identifier': row['assembly_accession'],
