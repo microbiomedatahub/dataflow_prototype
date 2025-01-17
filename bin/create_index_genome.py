@@ -320,10 +320,13 @@ class AssemblyReports:
         return annotation
 
 # Usage example:
-summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
-genome_path = "/work1/mdatahub/public/genome"
-# TODO: argparse or dotenv利用
-es_bulk_api = 'http://localhost:9201/_bulk'
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process genome assembly reports.")
+    parser.add_argument("-s", "--summary_path", type=str, default="/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt", help="Path to the summary file.")
+    parser.add_argument("-g", "--genome_path", type=str, default="/work1/mdatahub/public/genome", help="Path to the genome directory.")
+    parser.add_argument("-e", "--es_bulk_api", type=str, default="http://localhost:9201/_bulk", help="Elasticsearch bulk API endpoint.")
 
-reports = AssemblyReports(summary_path, genome_path, es_bulk_api)
-reports.parse_summary()
+    args = parser.parse_args()
+
+    reports = AssemblyReports(args.summary_path, args.genome_path, args.es_bulk_api)
+    reports.parse_summary()
