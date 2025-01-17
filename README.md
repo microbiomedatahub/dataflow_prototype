@@ -161,6 +161,20 @@ grep "assembly from type material" /lustre9/open/shared_data/genomes/ASSEMBLY_RE
 
 ### mag-mgnify
 ```
+
+### ElasticsearchのgenomeインデックスをJSONLを生成せず直接更新する方法
+
+#### input
+- /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
+- /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt
+
+#### 実行方法
+
+読み込むファイルコマンドライン引数で渡して下記のように実行する（デフォルトでgenbankのファイルが指定される）
+
+```
+python3 bin/create_index_genome.py -s /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
+```
 TBW
 ```
 
