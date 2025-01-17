@@ -142,7 +142,7 @@ class Bac2Feature:
         else:
             for key, value in d.items():
                 try:
-                    if isinstance(value, (int, float)):
+                    if value not in ["NA", "NaN"]:
                         num = float(value)
                         rounded_num = round(num, 3)
                         d[key] = rounded_num
