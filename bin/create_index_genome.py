@@ -290,6 +290,8 @@ class AssemblyReports:
             with open(dfast_stats_path, 'r') as f:
                 stats = {line.split('\t')[0]: line.split('\t')[1].strip() for line in f}
                 annotation['_dfast'] = stats
+        else:
+            annotation['_dfast'] = {}
 
         # DFASTQC結果から取得
         dfastqc_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'dfastqc', 'dqc_result.json')
