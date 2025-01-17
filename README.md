@@ -1,18 +1,31 @@
-# データの新規作成・更新手順
-
-データや解析データの取得およびMdatahub環境へのデータ配置、オントロジーマッピングなどアノテーションおよびデータ形式変換、検索データのElasticsearchデータ投入について記載する
-
-## 環境セットアップ 
+# 1. 環境セットアップ 
 https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従う。
 
-## テストデータを利用した動作確認
-https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従う。以下のテストデータ変換方法は古いので、要動作確認。
+# 2. データの新規作成・更新手順
+データや解析データの取得およびMdatahub環境へのデータ配置、オントロジーマッピングなどアノテーションおよびデータ形式変換、検索データのElasticsearchデータ投入について記載する
+
+## 2-1. genomeの新規データ取得、変換および投入 
+ElasticsearchのgenomeインデックスをJSONLを生成せず直接更新する方法
+
+### input
+- INSDC-MAG: /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
+- Isolate Genome: /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt
+
+### 実行方法
+読み込むファイルコマンドライン引数で渡して下記のように実行する（デフォルトでINSDC-MAGのファイルが指定されて、ステージング環境にデータが投入される。）
 
 ```
-ruby bin/create_indexes.rb testdata
+python3 bin/create_index_genome.py -s /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
+```
+TBW
 ```
 
-## INSDC由来のProjectとMAGの新規データ取得、変換および投入
+```
+---
+*** 以下、あとで見直す ***
+
+## 2-2. Projectの新規データ取得、変換および投入
+
 
 ### 1. 最新のbioproject.xml取得
     - ```wget https://ddbj.nig.ac.jp/public/ddbj_database/bioproject/bioproject.xml```
@@ -77,7 +90,7 @@ mkdir bulk_import/ $(date +%Y%m%d)
 bash bin/split.sh 
 ```
 
-
+```
 mkdir bulk_import
 bash bin/split.sh #TODO:対象ファイルと出力先の修正
 curl -XDELETE http://localhost:9200/bioproject 
@@ -135,47 +148,3 @@ $ python kraken2plotlyjson.py -i /work1/mdatahub/private/megap -o /work1/mdatahu
 * mget_bioproject
 * copy_MAGoutput_dfast_218655.rb
 * copy_MAGoutput_dfastqc_218655.rb
-
----
-## TODO
-
-RefSeqリファレンスゲノムおよびMGnify由来のMAGについてはあとで更新する（2024-12-05）
-
-### gnm-refseq
-PGAPを使ってないいにしえのモデル微生物３件。全てのリファレンスゲノムは、強制的に、PRJNA224116のRefSeqエントリーに紐づけることにする
-```
-[tf@at044 ~]$ grep "assembly from type material" /lustre9/open/shared_data/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt |egrep "archaea|bacteria" |cut -f2 |sort |uniq -c
-   21745 PRJNA224116
-      1 PRJNA57675
-      1 PRJNA57777
-      1 PRJNA57799
-```
-1. PRJNA224116.xmlを取得
-    - ```efetch -db bioproject -id PRJNA224116  -mode xml > PRJNA224116.xml```
-2. GCF階層ディレクトリを作成して GCF Assembly Accesion毎にbiosampleエントリーのxmlを取得して配置。ID関係の最新情報は以下で取得可能。
-```
-grep "assembly from type material" /lustre9/open/shared_data/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt |egrep "archaea|bacteria" |cut -f1,3
-```
-3. dfastおよびdfast-qcの結果を配置
-4. JSON変換と投入
-
-### mag-mgnify
-```
-
-### ElasticsearchのgenomeインデックスをJSONLを生成せず直接更新する方法
-
-#### input
-- /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
-- /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt
-
-#### 実行方法
-
-読み込むファイルコマンドライン引数で渡して下記のように実行する（デフォルトでgenbankのファイルが指定される）
-
-```
-python3 bin/create_index_genome.py -s /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
-```
-TBW
-```
-
- ```
