@@ -234,6 +234,11 @@ class AssemblyReports:
         # TODO: MGnify対応
             return
 
+        genome_dir = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'])
+        if not os.path.exists(genome_dir):
+            #print(f"Directory does not exist: {genome_dir}")
+            return
+
         annotation = {
             'type': 'genome',
             'identifier': row['assembly_accession'],
@@ -322,9 +327,11 @@ class AssemblyReports:
 
         # genome.json出力
         genome_json_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.json')
-        with open(genome_json_path, 'w') as genome_file:
-            json.dump(annotation, genome_file, indent=4)
+        #with open(genome_json_path, 'w') as genome_file:
+        #    json.dump(annotation, genome_file, indent=4)
 
+        #print(json.dumps(annotation, indent=4))
+        print(row['assembly_accession'])
         # deprecated
         # ESに直接insertするのでjsonlを作らない
         # out.write(json.dumps(annotation) + '\n')
