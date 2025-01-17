@@ -322,9 +322,8 @@ class AssemblyReports:
 
         # genome.json出力
         genome_json_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.json')
-        #FIXME
-        #with open(genome_json_path, 'w') as genome_file:
-        #    json.dump(annotation, genome_file, indent=4)
+        with open(genome_json_path, 'w') as genome_file:
+            json.dump(annotation, genome_file, indent=4)
 
         # deprecated
         # ESに直接insertするのでjsonlを作らない
