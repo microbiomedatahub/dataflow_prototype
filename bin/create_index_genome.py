@@ -181,11 +181,9 @@ def logs(message: str):
 
 
 class AssemblyReports:
-    def __init__(self, input_path, output_path, genome_path, bulk_api):
-        self.input_path = input_path
-        self.output_path = output_path
+    def __init__(self, summary_path, genome_path, bulk_api):
+        self.summary_path = summary_path
         self.genome_path = genome_path
-        self.source = 'assembly_summary_genbank.txt'
         self.b2f = Bac2Feature('/work1/mdatahub/public/dev/20241221_All_predicted_traits.txt')
         # TODO: urlはコマンド引数もしくは環境変数にする
         self.bulkinsert = BulkInsert(bulk_api)
@@ -193,21 +191,11 @@ class AssemblyReports:
 
 
     def parse_summary(self):
-        source_file = os.path.join(self.input_path, 'genomes/ASSEMBLY_REPORTS', self.source)
-        output_file = os.path.join(self.output_path, f'mdatahub_index_genome-{datetime.date.today()}.jsonl-togo')
-
-        with open(source_file, 'r', encoding='utf-8') as f:
+        #TODO：output_file出力してない
+        output_file = os.path.join("/work1/mdatahub/private/genomes/",f'mdatahub_index_genome-{datetime.date.today()}.jsonl')
+        with open(self.summary_path, 'r', encoding='utf-8') as f:
             headers = []
             lines = f.readlines()
-            """ deprecated. output_fileに書き出す場合はこちらから呼び出す
-            with open(output_file, 'w') as out:
-                for i, line in enumerate(lines):
-                    if i == 1:
-                        headers = line.strip('#').strip().split('\t')
-                    elif i > 1:
-                        data = dict(zip(headers, line.strip().split('\t')))
-                        self.process_row(data, out)
-            """
             l = 0
             docs = []
             for i, line in enumerate(lines):
@@ -230,8 +218,18 @@ class AssemblyReports:
 
     #def process_row(self, row, out):
     def process_row(self, row):
-        if 'derived from metagenome' not in row.get('excluded_from_refseq', ''):
+        # row['assembly_accession'] のプレフィックスがGCAの場合
+        if row['assembly_accession'].startswith('GCA'):
+            if 'derived from metagenome' not in row.get('excluded_from_refseq', ''):
+                return
+        # row['assembly_accession'] のプレフィックスがGCFの場合                
+        elif row['assembly_accession'].startswith('GCF'):
+            if not row['relation_to_type_material'].startswith("assembly"):
+                return
+        else:
+        # TODO: MGnify対応
             return
+
         annotation = {
             'type': 'genome',
             'identifier': row['assembly_accession'],
@@ -239,7 +237,7 @@ class AssemblyReports:
             'title': row['organism_name'],
             'description': row['excluded_from_refseq'],
             'data type': 'Genome sequencing and assembly',
-            'organization': row['submitter'],
+            'organization': row.get('submitter', row.get('asm_submitter')),
             'publication': [ { } ],
             'properties': row,
             'dbXrefs': [],
@@ -332,11 +330,13 @@ class AssemblyReports:
         return annotation
 
 # Usage example:
-input_path = "/work1/mdatahub/app/dataflow_prototype"
-output_path = "/work1/mdatahub/app/dataflow_prototype"
-genome_path = "/work1/mdatahub/public/genome"
-# TODO: argparse or dotenv利用
-es_bulk_api = 'http://localhost:9201/_bulk'
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process genome assembly reports.")
+    parser.add_argument("-s", "--summary_path", type=str, default="/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt", help="Path to the summary file.")
+    parser.add_argument("-g", "--genome_path", type=str, default="/work1/mdatahub/public/genome", help="Path to the genome directory.")
+    parser.add_argument("-e", "--es_bulk_api", type=str, default="http://localhost:9201/_bulk", help="Elasticsearch bulk API endpoint.")
 
-reports = AssemblyReports(input_path, output_path, genome_path, es_bulk_api)
-reports.parse_summary()
+    args = parser.parse_args()
+
+    reports = AssemblyReports(args.summary_path, args.genome_path, args.es_bulk_api)
+    reports.parse_summary()
