@@ -181,11 +181,9 @@ def logs(message: str):
 
 
 class AssemblyReports:
-    def __init__(self, summary_path, output_path, genome_path, bulk_api):
+    def __init__(self, summary_path, genome_path, bulk_api):
         self.summary_path = summary_path
-        self.output_path = output_path
         self.genome_path = genome_path
-        #self.source = 'assembly_summary_genbank.txt'
         self.b2f = Bac2Feature('/work1/mdatahub/public/dev/20241221_All_predicted_traits.txt')
         # TODO: urlはコマンド引数もしくは環境変数にする
         self.bulkinsert = BulkInsert(bulk_api)
@@ -193,20 +191,11 @@ class AssemblyReports:
 
 
     def parse_summary(self):
-        output_file = os.path.join(self.output_path, f'mdatahub_index_genome-{datetime.date.today()}.jsonl-togo')
-
+        #TODO：output_file出力してない
+        output_file = os.path.join("/work1/mdatahub/private/genomes/",f'mdatahub_index_genome-{datetime.date.today()}.jsonl')
         with open(self.summary_path, 'r', encoding='utf-8') as f:
             headers = []
             lines = f.readlines()
-            """ deprecated. output_fileに書き出す場合はこちらから呼び出す
-            with open(output_file, 'w') as out:
-                for i, line in enumerate(lines):
-                    if i == 1:
-                        headers = line.strip('#').strip().split('\t')
-                    elif i > 1:
-                        data = dict(zip(headers, line.strip().split('\t')))
-                        self.process_row(data, out)
-            """
             l = 0
             docs = []
             for i, line in enumerate(lines):
@@ -332,10 +321,9 @@ class AssemblyReports:
 
 # Usage example:
 summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
-output_path = "/work1/mdatahub/app/dataflow_prototype"
 genome_path = "/work1/mdatahub/public/genome"
 # TODO: argparse or dotenv利用
 es_bulk_api = 'http://localhost:9201/_bulk'
 
-reports = AssemblyReports(summary_path, output_path, genome_path, es_bulk_api)
+reports = AssemblyReports(summary_path, genome_path, es_bulk_api)
 reports.parse_summary()
