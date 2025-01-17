@@ -138,7 +138,7 @@ class Bac2Feature:
     def get_b2f(self,mag_id):
         d = self.b2f_dict.get(mag_id, None)
         if d is None:
-            return None
+            return {}
         else:
             for key, value in d.items():
                 try:
@@ -225,19 +225,29 @@ class AssemblyReports:
         # row['assembly_accession'] のプレフィックスがGCAの場合
         if row['assembly_accession'].startswith('GCA'):
             if 'derived from metagenome' not in row.get('excluded_from_refseq', ''):
+                data_type = "MAG"
+                data_source = "INSDC"
                 return
         # row['assembly_accession'] のプレフィックスがGCFの場合                
         elif row['assembly_accession'].startswith('GCF'):
             if not row['relation_to_type_material'].startswith("assembly"):
+                data_type = "G"
+                data_source = "RefSeq"
                 return
         else:
         # TODO: MGnify対応
+            data_type = ""
+            data_source = ""
             return
 
         genome_dir = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'])
         if not os.path.exists(genome_dir):
             #print(f"Directory does not exist: {genome_dir}")
             return
+
+        # dateのフォーマットをgenbankのフォーマットに変換
+        row['seq_rel_date'] = row.get('seq_rel_date').replace("-", "/") 
+        # TODO: data_type, data_sourceはソースによって値が変わる
 
         annotation = {
             'type': 'genome',
@@ -306,7 +316,7 @@ class AssemblyReports:
         annotation['_bac2feature'] = self.b2f.get_b2f(row['assembly_accession'])
         
         # 星（quality）計算
-        contamination = annotation['_annotation'].get('contamination', 0)
+        contamination = annotation['_annotation'].get('contamination', -1)
         completeness = annotation['_annotation'].get('completeness', 0)
         sequence_count = int(annotation['_annotation'].get('_dfast', {}).get('Number of Sequences', 0))
         rrna_count = int(annotation['_annotation'].get('_dfast', {}).get('Number of rRNAs', 0))
@@ -316,7 +326,7 @@ class AssemblyReports:
             star += 1
         if completeness > 60:
             star += 1
-        if sequence_count < 30:
+        if 0 < sequence_count < 30:
             star += 1
         if rrna_count > 2:
             star += 1
