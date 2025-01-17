@@ -11,7 +11,7 @@ import urllib.parse
 
 
 def asm_acc2path(asm_acc):
-    parts = asm_acc.replace("GCA_", "GCA").split(".")[0]
+    parts = asm_acc.replace("GCA_", "GCA").replace("GCF_", "GCF").split(".")[0]
     return "/".join([parts[i:i+3] for i in range(0, len(parts), 3)])
 
 class BioSampleSet:
