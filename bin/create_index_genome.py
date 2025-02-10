@@ -10,7 +10,10 @@ import urllib.request
 import urllib.parse
 
 
-def asm_acc2path(asm_acc):
+def asm_acc2path(asm_acc:str) -> str:
+    """
+    IDを3文字づつ区切ったファイルが格納されたパスと一致する文字列を生成し返す
+    """
     parts = asm_acc.replace("GCA_", "GCA").replace("GCF_", "GCF").split(".")[0]
     return "/".join([parts[i:i+3] for i in range(0, len(parts), 3)])
 
@@ -128,10 +131,14 @@ class BioSample:
 class Bac2Feature:
     def __init__(self, b2f_path):
         d = {}
-        with open (b2f_path, 'r') as f:
-            reader = csv.DictReader(f, delimiter='\t')
-            for row in reader:
-                d.update({row['MAG_ID']: row })
+        if os.path.exists(b2f_path):
+            with open (b2f_path, 'r') as f:
+                reader = csv.DictReader(f, delimiter='\t')
+                for row in reader:
+                    d.update({row['MAG_ID']: row })
+        else:
+            today = datetime.date.today()
+            logs(f"Error processing Bac2Feature: {b2f_path}", f"{today}_bac2feature_error_log.txt") 
         self.b2f_dict = d
 
 
@@ -159,6 +166,7 @@ class BulkInsert:
         self.es_url = url
     def insert(self,docs):
         insert_lst = []
+        today = datetime.date.today()
         for doc in docs:
             try:
                 insert_lst.append({'index': {'_index': 'genome', '_id': doc['identifier']}})
@@ -175,13 +183,12 @@ class BulkInsert:
             log_str = json.dumps(response_data)
             word = "exception"
             if word in log_str:
-                logs(log_str)
+                file_name = f"{today}_bulkinsert_error_log.txt"
+                logs(log_str, file_name)
 
 
-def logs(message: str):
-    #dir_name = os.path.dirname(args.output)
-    log_file = "bulkinsert_error_log.txt"
-    with open(log_file, "a") as f:
+def logs(message: str, file_name: str):
+    with open(f"logs/{file_name}", "a") as f:
         f.write(message  + "\n")
 
 
@@ -189,6 +196,7 @@ class AssemblyReports:
     def __init__(self, summary_path, genome_path, bulk_api, b2f_path):
         self.summary_path = summary_path
         self.genome_path = genome_path
+        # TODO: b2fファイルが存在しない場合空の空のobjを返す仕様を検討
         self.b2f = Bac2Feature(b2f_path)
         # TODO: urlはコマンド引数もしくは環境変数にする
         self.bulkinsert = BulkInsert(bulk_api)
@@ -196,32 +204,37 @@ class AssemblyReports:
 
 
     def parse_summary(self):
-        #TODO：output_file出力してない
-        output_file = os.path.join("/work1/mdatahub/private/genomes/",f'mdatahub_index_genome-{datetime.date.today()}.jsonl')
-        with open(self.summary_path, 'r', encoding='utf-8') as f:
-            headers = []
-            lines = f.readlines()
-            l = 0
-            docs = []
-            for i, line in enumerate(lines):
-                if i == 1:
-                    headers = line.strip('#').strip().split('\t')
-                elif i > 1:
-                    data = dict(zip(headers, line.strip().split('\t')))
-                    doc = self.process_row(data)
-                    if doc:
-                        docs.append(doc)
-                        l += 1
-                        if l > self.batch_size:
-                            self.bulkinsert.insert(docs)
-                            docs = []
-                            l = 0
-            if len(docs) > 0:
-                self.bulkinsert.insert(docs)
+        # DEP.：output_file出力しないため不要
+        # output_file = os.path.join("/work1/mdatahub/private/genomes/",f'mdatahub_index_genome-{datetime.date.today()}.jsonl')
+        try:
+            with open(self.summary_path, 'r', encoding='utf-8') as f:
+                headers = []
+                lines = f.readlines()
+                l = 0
+                docs = []
+                for i, line in enumerate(lines):
+                    if i == 1:
+                        headers = line.strip('#').strip().split('\t')
+                    elif i > 1:
+                        data = dict(zip(headers, line.strip().split('\t')))
+                        doc = self.process_row(data)
+                        if doc:
+                            docs.append(doc)
+                            l += 1
+                            if l > self.batch_size:
+                                self.bulkinsert.insert(docs)
+                                docs = []
+                                l = 0
+                if len(docs) > 0:
+                    self.bulkinsert.insert(docs)
+        except Exception as e:
+            print(f"Error processing assembly summary: {self.summary_path}")
+            print(f"Exception: {e}")
                     
 
     #def process_row(self, row, out):
     def process_row(self, row):
+        today = datetime.date.today()
         # row['assembly_accession'] のプレフィックスがGCAの場合
         if row['assembly_accession'].startswith('GCA'):
             data_type = "MAG"
@@ -235,7 +248,7 @@ class AssemblyReports:
             if not row['relation_to_type_material'].startswith("assembly"):
                 return
         else:
-        # TODO: MGnify対応
+            # TODO: MGnify対応
             data_type = ""
             data_source = ""
             return
@@ -292,6 +305,7 @@ class AssemblyReports:
                 annotation['_dfast'] = stats
         else:
             annotation['_dfast'] = {}
+            logs(f"Error processing DFAST statistics: {dfast_stats_path}", f"{today}_dfast_error_log.txt")
 
         # DFASTQC結果から取得
         dfastqc_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'dfastqc', 'dqc_result.json')
@@ -304,6 +318,9 @@ class AssemblyReports:
         else:
             annotation['has_analysis'] = False
             annotation['_dfastqc'] = {}
+            # dfastqcがない場合completeness=Noneを入力するという処理が正しいか確認
+            annotation['_annotation']['completeness'] = None
+            logs(f"Error processing DFASTQC: {dfastqc_path}", f"{today}_dfastqc_error_log.txt")
 
         # 配列ファイルから取得
         genome_fna_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.fna.gz')
@@ -338,7 +355,6 @@ class AssemblyReports:
 
         annotation['quality'] = star
         annotation['quality_label'] = '⭐️' * star
-
 
         # genome.json出力
         genome_json_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.json')
