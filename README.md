@@ -5,17 +5,22 @@ https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従�
 データや解析データの取得およびMdatahub環境へのデータ配置、オントロジーマッピングなどアノテーションおよびデータ形式変換、検索データのElasticsearchデータ投入について記載する
 
 ## 2-1. genomeの新規データ取得、変換および投入 
-ElasticsearchのgenomeインデックスをJSONLを生成せず直接更新する方法
+ElasticsearchのgenomeインデックスをJSONLを生成せず直接更新する
 
 ### input
-- INSDC-MAG: /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
-- Isolate Genome: /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt
+- INSDC-MAG: /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt
+- Isolate Genome: /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
+- bac2feature: /work1/mdatahub/private/insdc/b2f/20241221_All_predicted_traits.txt
+
+### オプション
+- "-g": ゲノム情報を配置したルートディレクトリを渡す。"/work1/mdatahub/public/genome"がデフォルトとして設定されている
+- "-e": Elasticsearchのbulk_apiを指定する。デフォルトでステージング環境のbulk apiが設定されている。
 
 ### 実行方法
 読み込むファイルコマンドライン引数で渡して下記のように実行する（デフォルトでINSDC-MAGのファイルが指定されて、ステージング環境にデータが投入される。）
 
 ```
-python3 bin/create_index_genome.py -s /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
+python3 bin/create_index_genome.py
 ```
 TBW
 ```
