@@ -1,30 +1,40 @@
-# 1. 環境セットアップ 
-https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従う。
+# 1. 環境セットアップ
+https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従う。index_template/* を利用したElasticsearchのtemplate設定は、...
 
-# 2. データの新規作成・更新手順
-データや解析データの取得およびMdatahub環境へのデータ配置、オントロジーマッピングなどアノテーションおよびデータ形式変換、検索データのElasticsearchデータ投入について記載する
 
-## 2-1. genomeの新規データ取得、変換および投入 
-ElasticsearchのgenomeインデックスをJSONLを生成せず直接更新する方法
+# 2. Genomeデータの新規作成・更新手順
+ゲノムデータの準備からElasticsearchデータ投入方法を記載する
 
-### input
-- INSDC-MAG: /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
-- Isolate Genome: /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt
+### 2-1. 準備
+assembly_summaryファイルを配置後、setup_genome.pyを実行することでゲノム毎のデータが配置される
 
-### 実行方法
+dfast, dfast-qc, bac2feature, mbgdについては、...
+
+```
+cd  /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/
+wget -O assembly_summary_refseq-20250116.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
+ln -s assembly_summary_refseq-20250116.txt assembly_summary_refseq.txt
+wget -O assembly_summary_genbank-20250116.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt
+ln -s assembly_summary_genbank-20250116.txt assembly_summary_refseq.txt
+
+python3 bin/setup_genome.py insdc
+python3 bin/setup_genome.py refseq
+
+```
+
+### 2-2. 実行方法
+genomeインデックスのレコードgenome.jsonを生成し、JSONLを生成せず直接Elasticsearchに投入される
+
 読み込むファイルコマンドライン引数で渡して下記のように実行する（デフォルトでINSDC-MAGのファイルが指定されて、ステージング環境にデータが投入される。）
 
 ```
 python3 bin/create_index_genome.py -s /work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
 ```
-TBW
-```
 
-```
 ---
-*** 以下、あとで見直す ***
 
-## 2-2. Projectの新規データ取得、変換および投入
+## 3. Projectの新規データ取得、変換および投入
+*** プロジェクトにつていは、あとで整理する***
 
 
 ### 1. 最新のbioproject.xml取得
@@ -65,10 +75,6 @@ lrwxrwxrwx. 1 mdb_dev mdb_dev 23  6月 12  2023 bioproject.xml -> bioproject-202
         * ES投入
 ```
 
-#### Genome `create_index_genome.rb`
-
-```
-```
 
 ### 5. Elasticsearchへの全長jsonlのbulk import
 
@@ -117,8 +123,8 @@ bash bin/bulk_import.sh
 $ python kraken2plotlyjson.py -i /work1/mdatahub/private/megap -o /work1/mdatahub/public/project
 ```
 
----
 ### スクリプト 利用確認
+以下は、プロジェクトデータ作成時に利用しているスクリプト群。不要な古いスクリプトは bin-oldに移動。
 * create_project_accessions.rb # (2)
 * bioproject_mget.rb # (3)
 * create_index_project.rb　# (4)-a
@@ -127,24 +133,5 @@ $ python kraken2plotlyjson.py -i /work1/mdatahub/private/megap -o /work1/mdatahu
 * split.sh #(5)?
 * plotly/tsv2plotlyjson.py #(6) 
 
-### ESセットアップ
-
-`要ドキュメント`
-
-* index_template/*
-
-#### script参照
-* mdatahub.rb
-* lib_bioprojectxml2json.rb
-
-#### 動作未確認作業スクリプト
-* mget_asm
-* mget_asm_checkm
-* mget_biosample_from_asm
-* mget_asm_gi
-* rebuild_directory_project.rb
-* rebuild_directory_genome.rb
-* mget
-* mget_bioproject
-* copy_MAGoutput_dfast_218655.rb
-* copy_MAGoutput_dfastqc_218655.rb
+* mdatahub.rb # scriptから参照
+* lib_bioprojectxml2json.rb # scriptから参照
