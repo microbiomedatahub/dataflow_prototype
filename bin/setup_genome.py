@@ -13,16 +13,19 @@ from typing import Any, Dict, Optional
 # Load environment variables from .env file
 # load_dotenv()
 
-def asm_acc2path(asm_acc):
-    parts = asm_acc.replace("GCF_", "GCF").split(".")[0]
+def asm_acc2path(asm_acc, dataset):
+    if dataset == "insdc":
+        parts = asm_acc.replace("GCA_", "GCA").split(".")[0]
+    else:
+        parts = asm_acc.replace("GCF_", "GCF").split(".")[0]
     return "/".join([parts[i:i+3] for i in range(0, len(parts), 3)])
 
 def create_genome_directory(genome_id):
     os.environ['MDATAHUB_PATH_GENOME'] = '/work1/mdatahub/public/genome'
     base_path = os.getenv('MDATAHUB_PATH_GENOME')
-    if not genome_id.startswith("GCF_") or len(genome_id.split(".")) != 2:
+    if not (genome_id.startswith("GCF_") or genome_id.startswith("GCA_")) or len(genome_id.split(".")) != 2:
         raise ValueError("Invalid genome ID format. Expected format: 'GCF_XXXXXXXXX.X'")
-    relative_path = asm_acc2path(genome_id)
+    relative_path = asm_acc2path(genome_id, dataset)
     dir_path = os.path.join(base_path, relative_path, genome_id)
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
@@ -60,7 +63,7 @@ def download_genomic_file(genome_id, genome_url):
         except Exception as e:
             print(f"Failed to decompress {compressed_path}: {e}")
 
-    return f"https://mdatahub.org/public/genome/{asm_acc2path(genome_id)}/{genome_id}/genome.fna"
+    return f"https://mdatahub.org/public/genome/{asm_acc2path(genome_id, dataset)}/{genome_id}/genome.fna"
 
 def fetch_biosample_metadata(biosample_id, genome_id):
     target_dir = create_genome_directory(genome_id)
@@ -163,5 +166,10 @@ def process_assembly_summary(file_path):
 # wget -O assembly_summary_refseq-20250116.txt https://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
 # ln -s assembly_summary_refseq-20250116.txt assembly_summary_refseq.txt
 
-assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
-process_assembly_summary(assembly_summary_path)
+import sys
+
+dataset = sys.argv[1] if len(sys.argv) > 1 else "refseq"
+if dataset == "insdc":
+    assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_insdc.txt"
+else:
+    assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
