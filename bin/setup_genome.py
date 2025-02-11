@@ -293,6 +293,10 @@ def process_assembly_summary(file_path, dataset):
 
             #if count >= 10 :
             #    break
+            #if not genome_id == 'GCF_004341395.1':
+            #    continue
+            if columns[2] == "":
+                continue
             if (dataset == "insdc" and "derived from metagenome" in columns[20]) or (dataset == "refseq" and relation_to_type_material.startswith("assembly")):
                 genomic_file_url = download_genomic_file(genome_id, genome_url)
                 fetch_biosample_metadata(biosample_id, genome_id)
@@ -307,7 +311,7 @@ import sys
 
 dataset = sys.argv[1] if len(sys.argv) > 1 else "refseq"
 if dataset == "insdc":
-    assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_insdc.txt"
+    assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
     #assembly_summary_path = "/Users/tf/github/dataflow_prototype/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
 else:
     assembly_summary_path = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
