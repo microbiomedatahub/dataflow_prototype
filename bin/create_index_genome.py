@@ -188,7 +188,7 @@ class BulkInsert:
 
 
 def logs(message: str, file_name: str):
-    with open(f"logs/{file_name}", "a") as f:
+    with open(f"bin/logs/{file_name}", "a") as f:
         f.write(message  + "\n")
 
 
@@ -229,8 +229,6 @@ class AssemblyReports:
             print(f"Error processing assembly summary: {self.summary_path}")
             print(f"Exception: {e}")
                     
-
-    #def process_row(self, row, out):
     def process_row(self, row):
         today = datetime.date.today()
         # row['assembly_accession'] のプレフィックスがGCAの場合
@@ -341,6 +339,7 @@ class AssemblyReports:
                 annotation['has_analysis'] = True
                 annotation['_dfastqc'] = dqc_data
                 annotation['_annotation'].update(dqc_data.get('cc_result', {}))
+
                 # DFASTQCから"_gtdb_taxon"を取り出し_gtdb_taxonとして追加
                 gtdb_result = dqc_data.get('gtdb_result')
                 if gtdb_result:
@@ -355,7 +354,7 @@ class AssemblyReports:
                             gtdb_taxon_list = gtdb_taxon.split(";")
                             if ani > 95:
                                 gtdb_taxon_list.append(gtdb_species)
-                            annotation["_gtdb_taxon"] = gtdb_taxon_list
+                            annotation['_gtdb_taxon'] = gtdb_taxon_list
 
         else:
             annotation['has_analysis'] = False
@@ -400,13 +399,12 @@ class AssemblyReports:
 
         # genome.json出力
         genome_json_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.json')
-        #with open(genome_json_path, 'w') as genome_file:
-        #    json.dump(annotation, genome_file, indent=4)
+        with open(genome_json_path, 'w') as genome_file:
+            json.dump(annotation, genome_file, indent=4)
 
-        #print(json.dumps(annotation, indent=4))
-        print(row['assembly_accession'])
-        # deprecated
-        # ESに直接insertするのでjsonlを作らない
+        # print(json.dumps(annotation, indent=4))
+        # print(row['assembly_accession'])
+        # DEP.: ESに直接insertするのでjsonlを作らない
         # out.write(json.dumps(annotation) + '\n')
         return annotation
 
