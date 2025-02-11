@@ -415,12 +415,12 @@ if __name__ == "__main__":
     ASSEMBLY_SUMMARY_GENBANK = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
     ASSEMBLY_SUMMARY_REFSEQ = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
     parser = argparse.ArgumentParser(description="Process genome assembly reports.")
-    # DEP.: ファイルパスは引数にせずにgenbank,reseqの両方を処理するように変更
-    # parser.add_argument("-s", "--summary_path", type=str, default=ASSEMBLY_SUMMARY_GENBANK, help="Path to the summary file.")
-    parser.add_argument("-g", "--genome_path", type=str, default="/work1/mdatahub/public/genome", help="Path to the genome directory.")
+    parser.add_argument("-i", "--insdc_path", type=str, default=ASSEMBLY_SUMMARY_GENBANK, help="Path to the summary file.")
+    parser.add_argument("-r", "--refseq_path", type=str, default=ASSEMBLY_SUMMARY_REFSEQ, help="Path to the summary file.")
+    parser.add_argument("-g", "--genome_path", type=str, default="/work1/mdatahub/public/genome", help="Path to the genome root directory.")
     parser.add_argument("-e", "--es_bulk_api", type=str, default="http://localhost:9201/_bulk", help="Elasticsearch bulk API endpoint.")
     args = parser.parse_args()
 
-    for summary_path in [ASSEMBLY_SUMMARY_GENBANK, ASSEMBLY_SUMMARY_REFSEQ]:
+    for summary_path in [args.i, args.r]:
         reports = AssemblyReports(summary_path, args.genome_path, args.es_bulk_api, B2F)
         reports.parse_summary()
