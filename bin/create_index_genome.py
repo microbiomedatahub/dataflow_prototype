@@ -17,6 +17,7 @@ def asm_acc2path(asm_acc:str) -> str:
     parts = asm_acc.replace("GCA_", "GCA").replace("GCF_", "GCF").split(".")[0]
     return "/".join([parts[i:i+3] for i in range(0, len(parts), 3)])
 
+# deplicated: BioSampleを変換したjsonファイルを取得するため不要
 class BioSampleSet:
     def __init__(self, xml_file, params=None):
         self.xml_file = xml_file
@@ -90,7 +91,7 @@ class BioSampleSet:
         del annotation['sample_temperature']
         return annotation
 
-
+# deplicated: BioSampleを変換したjsonファイルを取得するため不要
 class BioSample:
     def __init__(self, xml_node):
         self.xml_node = xml_node
@@ -179,7 +180,6 @@ class BulkInsert:
         with urllib.request.urlopen(req) as res:
             response_data = json.loads(res.read().decode('utf-8'))
             # print(response_data)
-            # TODO: エラーを検出しlogファイルに残す処理があると良い
             log_str = json.dumps(response_data)
             word = "exception"
             if word in log_str:
@@ -198,10 +198,8 @@ class AssemblyReports:
         self.genome_path = genome_path
         # TODO: b2fファイルが存在しない場合空の空のobjを返す仕様を検討
         self.b2f = Bac2Feature(b2f_path)
-        # TODO: urlはコマンド引数もしくは環境変数にする
         self.bulkinsert = BulkInsert(bulk_api)
         self.batch_size = 1000
-
 
     def parse_summary(self):
         # DEP.：output_file出力しないため不要
@@ -260,7 +258,6 @@ class AssemblyReports:
 
         # dateのフォーマットをgenbankのフォーマットに変換
         row['seq_rel_date'] = row['seq_rel_date'].replace("-", "/") 
-        # TODO: data_type, data_sourceはソースによって値が変わる
 
         annotation = {
             'type': 'genome',
@@ -285,7 +282,35 @@ class AssemblyReports:
             'data_source': data_source
         }
 
-        # BioSample.xmlからメタデータ取得
+        biosample_plus_default = {
+            'sample_count': 0,
+            'sample_organism': [],
+            'sample_taxid': [],
+            'sample_ph': [],
+            'sample_temperature': [],
+            'sample_host_organism': [],
+            'sample_host_organism_id': [],
+            'sample_host_disease': [],
+            'sample_host_disease_id': [],
+            'sample_host_location': [],
+            'sample_host_location_id': [],
+            'data_size': '0.0 GB'
+        }
+
+        # BioSamplelSetのxmlではなくgenomeディレクトリに配置されたjsonを読み込むように変更する
+        bs_json_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], f"{row['biosample']}.json") 
+        try:
+            if os.path.exists(bs_json_path):
+                with open(bs_json_path, 'r') as f:
+                    annotation['_annotation'] = json.load(f)
+            else:
+                annotation['_annotation'] = biosample_plus_default
+        except Exception as e:
+            logs(f"No biosample.json file: {dfast_stats_path}", f"{today}_bsjson_error_log.txt")
+
+
+        # DEP.: BioSampleを変換したjsonファイルを取得するため不要
+        """
         sample_xml_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], f"{row['biosample']}.xml")
         try:
             if os.path.exists(sample_xml_path):
@@ -296,6 +321,7 @@ class AssemblyReports:
         except Exception as e:
             print(f"Error processing BioSample XML: {sample_xml_path}")
             print(f"Exception: {e}")
+        """
 
         # DFAST結果から取得
         dfast_stats_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'dfast', 'statistics.txt')
@@ -315,6 +341,22 @@ class AssemblyReports:
                 annotation['has_analysis'] = True
                 annotation['_dfastqc'] = dqc_data
                 annotation['_annotation'].update(dqc_data.get('cc_result', {}))
+                # DFASTQCから"_gtdb_taxon"を取り出し_gtdb_taxonとして追加
+                gtdb_result = dqc_data.get('gtdb_result')
+                if gtdb_result:
+                    if gtdb_result.isinstance(list):
+                        gtdb_result = gtdb_result[0]
+
+                    if gtdb_result.isinstance(dict):
+                        gtdb_species = gtdb_result.get('gtdb_species')
+                        ani = gtdb_result.get('ani')
+                        gtdb_taxon = gtdb_result.get('gtdb_taxonomy')
+                        if gtdb_taxon is None:
+                            gtdb_taxon_list = gtdb_taxon.split(";")
+                            if ani > 95:
+                                gtdb_taxon_list.append(gtdb_species)
+                            annotation["_gtdb_taxon"] = gtdb_taxon_list
+
         else:
             annotation['has_analysis'] = False
             annotation['_dfastqc'] = {}
