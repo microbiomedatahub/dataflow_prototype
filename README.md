@@ -13,7 +13,7 @@ ElasticsearchのgenomeインデックスをJSONLを生成せず直接更新す�
 - bac2feature: /work1/mdatahub/private/insdc/b2f/20241221_All_predicted_traits.txt
 
 ### オプション
-- "-g": ゲノム情報を配置したルートディレクトリを渡す。"/work1/mdatahub/public/genome"がデフォルトとして設定されている
+- "-g": ゲノム情報を配置したルートディレクトリを渡す。"/work1/mdatahub/public/genome"がデフォルトのパスとして設定されている。
 - "-e": Elasticsearchのbulk_apiを指定する。デフォルトでステージング環境のbulk apiが設定されている。
 
 ### 実行方法
