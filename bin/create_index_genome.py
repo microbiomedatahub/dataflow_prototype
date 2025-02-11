@@ -368,16 +368,17 @@ class AssemblyReports:
         # out.write(json.dumps(annotation) + '\n')
         return annotation
 
-# Usage example:
 if __name__ == "__main__":
     B2F = "/work1/mdatahub/private/insdc/b2f/20241221_All_predicted_traits.txt"
     ASSEMBLY_SUMMARY_GENBANK = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
+    ASSEMBLY_SUMMARY_REFSEQ = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
     parser = argparse.ArgumentParser(description="Process genome assembly reports.")
-    parser.add_argument("-s", "--summary_path", type=str, default=ASSEMBLY_SUMMARY_GENBANK, help="Path to the summary file.")
+    # DEP.: ファイルパスは引数にせずにgenbank,reseqの両方を処理するように変更
+    # parser.add_argument("-s", "--summary_path", type=str, default=ASSEMBLY_SUMMARY_GENBANK, help="Path to the summary file.")
     parser.add_argument("-g", "--genome_path", type=str, default="/work1/mdatahub/public/genome", help="Path to the genome directory.")
     parser.add_argument("-e", "--es_bulk_api", type=str, default="http://localhost:9201/_bulk", help="Elasticsearch bulk API endpoint.")
-
     args = parser.parse_args()
 
-    reports = AssemblyReports(args.summary_path, args.genome_path, args.es_bulk_api, B2F)
-    reports.parse_summary()
+    for summary_path in [ASSEMBLY_SUMMARY_GENBANK, ASSEMBLY_SUMMARY_REFSEQ]:
+        reports = AssemblyReports(summary_path, args.genome_path, args.es_bulk_api, B2F)
+        reports.parse_summary()
