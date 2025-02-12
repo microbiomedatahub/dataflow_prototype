@@ -200,6 +200,7 @@ class AssemblyReports:
         self.b2f = Bac2Feature(b2f_path)
         self.bulkinsert = BulkInsert(bulk_api)
         self.batch_size = 1000
+        self.cnt = 0
 
     def parse_summary(self):
         # DEP.：output_file出力しないため不要
@@ -219,12 +220,14 @@ class AssemblyReports:
                         if doc:
                             docs.append(doc)
                             l += 1
+                            self.cnt += 1
                             if l > self.batch_size:
                                 self.bulkinsert.insert(docs)
                                 docs = []
                                 l = 0
                 if len(docs) > 0:
                     self.bulkinsert.insert(docs)
+                    print(f"{self.cnt} records processed.")
         except Exception as e:
             print(f"Error processing assembly summary: {self.summary_path}")
             print(f"Exception: {e}")
@@ -359,8 +362,8 @@ class AssemblyReports:
         else:
             annotation['has_analysis'] = False
             annotation['_dfastqc'] = {}
-            # dfastqcがない場合completeness=Noneを入力するという処理が正しいか確認
-            annotation['_annotation']['completeness'] = None
+            # TODO: dfastqcがない場合completeness=0をdefault値として入力するという処理が正しいか確認
+            annotation['_annotation']['completeness'] = 0
             logs(f"Error processing DFASTQC: {dfastqc_path}", f"{today}_dfastqc_error_log.txt")
 
         # 配列ファイルから取得
