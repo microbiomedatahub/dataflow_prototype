@@ -227,7 +227,7 @@ class AssemblyReports:
                                 l = 0
                 if len(docs) > 0:
                     self.bulkinsert.insert(docs)
-                    print(f"{self.cnt} records processed.")
+                print(f"{self.cnt} records processed.")
         except Exception as e:
             print(f"Error processing assembly summary: {self.summary_path}")
             print(f"Exception: {e}")
