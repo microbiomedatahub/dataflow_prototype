@@ -54,6 +54,7 @@ def create_output_directory(root_path, mag_id) -> str:
     """
     mag_id_str = re.sub(r"[_.]", "", mag_id)
     mag_id_lst = [mag_id_str[i:i+3] for i in range(0, len(mag_id_str), 3)]
+    # TODO: ファイル名修正
     output_path = f"{root_path}/{mag_id_lst[0]}/{mag_id_lst[1]}/{mag_id_lst[2]}/{mag_id_lst[3]}/{mag_id}/mgbd.json"
     return output_path
      
