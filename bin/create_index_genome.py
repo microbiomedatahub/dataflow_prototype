@@ -346,10 +346,10 @@ class AssemblyReports:
                 # DFASTQCから"_gtdb_taxon"を取り出し_gtdb_taxonとして追加
                 gtdb_result = dqc_data.get('gtdb_result')
                 if gtdb_result:
-                    if gtdb_result.isinstance(list):
+                    if isinstance(gtdb_result, list):
                         gtdb_result = gtdb_result[0]
 
-                    if gtdb_result.isinstance(dict):
+                    if isinstance(gtdb_result, dict):
                         gtdb_species = gtdb_result.get('gtdb_species')
                         ani = gtdb_result.get('ani')
                         gtdb_taxon = gtdb_result.get('gtdb_taxonomy')
@@ -400,6 +400,16 @@ class AssemblyReports:
         annotation['quality'] = star
         annotation['quality_label'] = '⭐️' * star
 
+        # gtdb_taxonを取得
+        # _dfastqc.gtdb_resultがlistとして存在する場合、最初の要素からgtdb_taxonomyを取得する
+        if type(annotation.get('_dfastqc', {}).get('gtdb_result')) is list:
+            gtdb_result = annotation['_dfastqc']['gtdb_result'][0]
+            gtdb_taxonomy = gtdb_result.get('gtdb_taxonomy')
+            if gtdb_taxonomy:
+                annotation['_gtdb_taxon'] = gtdb_taxonomy.split(";")
+        else:
+            annotation['_gtdb_taxon'] = []
+
         # genome.json出力
         genome_json_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.json')
         with open(genome_json_path, 'w') as genome_file:
@@ -422,6 +432,6 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--es_bulk_api", type=str, default="http://localhost:9201/_bulk", help="Elasticsearch bulk API endpoint.")
     args = parser.parse_args()
 
-    for summary_path in [args.i, args.r]:
+    for summary_path in [args.insdc_path, args.refseq_path]:
         reports = AssemblyReports(summary_path, args.genome_path, args.es_bulk_api, B2F)
         reports.parse_summary()
