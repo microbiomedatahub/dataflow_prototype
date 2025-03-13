@@ -377,6 +377,34 @@ class AssemblyReports:
 
         # Bac2Featureから取得
         annotation['_bac2feature'] = self.b2f.get_b2f(row['assembly_accession'])
+
+        # gtdb_taxonを取得
+        # _dfastqc.gtdb_resultがlistとして存在する場合、最初の要素からgtdb_taxonomyを取得する
+        if type(annotation['_dfastqc'].get('gtdb_result')) is list and len(annotation['_dfastqc'].get('gtdb_result')) > 0:
+            try:
+                gtdb_result = annotation['_dfastqc'].get('gtdb_result', [])[0]
+                gtdb_taxonomy = gtdb_result.get('gtdb_taxonomy')
+                if gtdb_taxonomy:
+                    annotation['_gtdb_taxon'] = gtdb_taxonomy.split(";")
+                gtdb_species = gtdb_result.get('gtdb_species')
+                if gtdb_species:
+                    annotation['_gtdb_taxon'].append(gtdb_species)
+            except:
+                print(f"Error processing GTDB taxonomy: {row['assembly_accession']}")
+                annotation['_gtdb_taxon'] = []
+        else:
+            annotation['_gtdb_taxon'] = []
+
+        # _genome_taxonにtaxonomy検索用の文字列をキーワードとして追加
+        annotation['_genome_taxon'] = annotation['organism'].split(" ")
+        if len(annotation.get('_gtdb_taxon', [])) > 0:
+            # _gtdb_taxonが存在する場合、_genome_taxonに追加
+            annotation['_genome_taxon'].extend(annotation['_gtdb_taxon'])
+            # _gtdb_taxonのprefix（*__）を削除し、さらに空白と_で分割した文字列を配列に追加
+            for gtdb_taxon in annotation['_gtdb_taxon']:
+                if len(gtdb_taxon) > 3 and gtdb_taxon[1:3] == "__":
+                    gtdb_taxon = gtdb_taxon[3:]
+                annotation['_genome_taxon'].extend(gtdb_taxon.replace("_", " ").split(" "))
         
         # 星（quality）計算
         contamination = annotation['_annotation'].get('contamination', -1)
@@ -400,15 +428,6 @@ class AssemblyReports:
         annotation['quality'] = star
         annotation['quality_label'] = '⭐️' * star
 
-        # gtdb_taxonを取得
-        # _dfastqc.gtdb_resultがlistとして存在する場合、最初の要素からgtdb_taxonomyを取得する
-        if type(annotation.get('_dfastqc', {}).get('gtdb_result')) is list:
-            gtdb_result = annotation['_dfastqc']['gtdb_result'][0]
-            gtdb_taxonomy = gtdb_result.get('gtdb_taxonomy')
-            if gtdb_taxonomy:
-                annotation['_gtdb_taxon'] = gtdb_taxonomy.split(";")
-        else:
-            annotation['_gtdb_taxon'] = []
 
         # genome.json出力
         genome_json_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.json')
