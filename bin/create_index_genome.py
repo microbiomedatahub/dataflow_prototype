@@ -442,12 +442,17 @@ class AssemblyReports:
 
 if __name__ == "__main__":
     B2F = "/work1/mdatahub/private/insdc/b2f/20241221_All_predicted_traits.txt"
-    ASSEMBLY_SUMMARY_GENBANK = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
-    ASSEMBLY_SUMMARY_REFSEQ = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
+    # TODO:Genome IDでフィルターしたASSEMBLY_SUMMARY_GENBANKとASSEMBLY_SUMMARY_REFSEQを指定する
+    # filter_by_genome.pyを使用したフィルター済みのファイルを指定する
+    ASSEMBLY_SUMMARY_GENBANK = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank_gi.txt"
+    ASSEMBLY_SUMMARY_REFSEQ = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq_gi.txt"
     parser = argparse.ArgumentParser(description="Process genome assembly reports.")
     parser.add_argument("-i", "--insdc_path", type=str, default=ASSEMBLY_SUMMARY_GENBANK, help="Path to the summary file.")
     parser.add_argument("-r", "--refseq_path", type=str, default=ASSEMBLY_SUMMARY_REFSEQ, help="Path to the summary file.")
-    parser.add_argument("-g", "--genome_path", type=str, default="/work1/mdatahub/public/genome", help="Path to the genome root directory.")
+    # gi用のgenomeパスを指定
+    # TODO: /work1/gi-mdatahub/public/genomeをmkdirしておく必要がある
+    parser.add_argument("-g", "--genome_path", type=str, default="/work1/gi-mdatahub/public/genome", help="Path to the genome root directory.")
+    # TODO: GI用のESのbulk APIのURLを引数で指定できるようにする
     parser.add_argument("-e", "--es_bulk_api", type=str, default="http://localhost:9201/_bulk", help="Elasticsearch bulk API endpoint.")
     args = parser.parse_args()
 
