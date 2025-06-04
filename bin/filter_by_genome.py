@@ -22,10 +22,10 @@ if __name__ == "__main__":
     assembly_summary_*.txtを先頭のカラムのIDでフィルターしIDのリストに含まれる行だけをファイルに出力するスクリプト。
     クエリとなるIDリストはtarget_ids.tsvのように保存する。
     使用例:
-    python filter_by_genome.py assembly_summary_refseq.txt target_ids.tsv output.tsv
+    python filter_by_genome.py assembly_summary_refseq.txt target_ids_refseq.txt assembly_summary_refseq_filtered.txt
     """
     if len(sys.argv) != 4:
-        print("Usage: python script.py <input.tsv> <target_ids.tsv> <output.tsv>")
+        print("Usage: python script.py <input.txt> <target_ids.txt> <output.txt>")
         sys.exit(1)
 
     input_file = sys.argv[1]
