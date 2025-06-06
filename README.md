@@ -6,7 +6,7 @@ https://github.com/microbiomedatahub/docker-microbiome-datahub/README.md に従�
 # 2. Genomeデータの新規作成・更新手順
 ゲノムデータの準備からElasticsearchデータ投入方法を記載する
 
-### 2-1. 準備
+## 2-1. 準備
 assembly_summaryファイルを配置後、setup_genome.pyを実行することでゲノム毎のデータが配置される
 
 dfast, dfast-qc, bac2feature, mbgdについては、...
@@ -23,7 +23,7 @@ python3 bin/setup_genome.py refseq
 
 ```
 
-### 2-2. 実行方法
+## 2-2. 実行方法
 genomeインデックスのレコードgenome.jsonを生成し、JSONLを生成せず直接Elasticsearchに投入される
 
 読み込むファイルコマンドライン引数で渡して下記のように実行する（デフォルトでINSDC-MAGのファイルが指定されて、ステージング環境にデータが投入される。）
@@ -34,11 +34,11 @@ python3 bin/create_index_genome.py
 
 ---
 
-## 3. Projectの新規データ取得、変換および投入
+# 3. Projectの新規データ取得、変換および投入
 *** プロジェクトにつていは、あとで整理する***
 
 
-### 1. 最新のbioproject.xml取得
+## 3-1. 最新のbioproject.xml取得
     - ```wget https://ddbj.nig.ac.jp/public/ddbj_database/bioproject/bioproject.xml```
     - 現在の本番は、```/work1/mdatahub/repos/dataflow_prototype/bioproject.xml``` のシンボリックリンクのsourceが最新データ
 
@@ -49,11 +49,12 @@ python3 bin/create_index_genome.py
 lrwxrwxrwx. 1 mdb_dev mdb_dev 23  6月 12  2023 bioproject.xml -> bioproject-20230612.xml
 ```
 
-### 2. 対象となるProjectサブセットのIDリストを取得 `create_project_accessions.rb `
-### 3. プロジェクト毎に各種データ（bioprojext.xml、biosample IDs、biosampleset.xml）を取得 `bioproject_mget.rb`
-### 4. Elasticsearch bulk APIで投入用のLine-delimited JSON形式ファイルを生成 
+## 3-2. 対象となるProjectサブセットのIDリストを取得 `create_project_accessions.rb `
+## 3-3. プロジェクト毎に各種データ（bioprojext.xml、biosample IDs、biosampleset.xml）を取得 `bioproject_mget.rb`
 
-#### Project `create_index_project.rb`
+# 4. Elasticsearch bulk APIで投入用のLine-delimited JSON形式ファイルを生成 
+
+## Project `create_index_project.rb`
 
 ```
         * 仕様：bioprojectxml2json.rbとbioproject_plus.rbの統合
@@ -77,7 +78,7 @@ lrwxrwxrwx. 1 mdb_dev mdb_dev 23  6月 12  2023 bioproject.xml -> bioproject-202
 ```
 
 
-### 5. Elasticsearchへの全長jsonlのbulk import
+# 5. Elasticsearchへの全長jsonlのbulk import
 
 Elasticsearchは100MBを超えるJSONファイルのbulk importができないため、このサイズを超えるデータは分割してインポートします。
 
@@ -104,7 +105,7 @@ curl -XDELETE http://localhost:9200/bioproject
 bash bin/bulk_import.sh
 ```
 
-### 6. メタゲノム解析の系統組成データをplotly JSONに変換する
+# 6. メタゲノム解析の系統組成データをplotly JSONに変換する
 
 - 系統組成データ可視化の概要
 - Runごとの系統組成データ（例 ERR0000_1.fastq.sam.mapped..）をBioProjectごとにPlotlyのstacked chartに形式に変換し読み込みJSONデータを書き出します。
@@ -122,6 +123,33 @@ bash bin/bulk_import.sh
 - 
 ```
 $ python kraken2plotlyjson.py -i /work1/mdatahub/private/megap -o /work1/mdatahub/public/project
+```
+
+# 7. MAGからeumbrella bioproject取得
+
+assembly_summary_genbankからassembly-bioprojectを取得するために、以下のスクリプトをする
+入力には、assembly＿summary＿genbank.txtおよび  sqliteのrelation.dbをが必要
+
+relation.dbには、
+- bioproject_umbrella2bioproject.tsv
+- biosample_bioproject.tsvが格納されている
+```
+ruby bin/mag-dblinks-summary-tsv.rb >  mag-dblinks-summary-filtered-20250605.tsv
+```
+
+その出力結果
+```
+assembly-accession	assembly-bioproject	assembly-biosample	umbrella-bioproject-count	biosample-count	bioproject-tree-path.last	bioproject-tree-path
+GCA_000205145.2	PRJNA18537	SAMN02954271	2	2	PRJNA20823	["PRJNA18537", "PRJNA163501", "PRJNA20823"]
+GCA_000205525.2	PRJNA60717	SAMN02954256	1	29	PRJNA61745	["PRJNA60717", "PRJNA61745"]
+GCA_000496115.1	PRJNA176861	SAMN02471615	2	2	PRJNA20823	["PRJNA176861", "PRJNA208475", "PRJNA20823"]
+```
+
+6/6時点での出力は、検索精度向上のため、umbrella bioproject >=1　かつ biosample-count >= 2の場合のみ出力するように以下でフィルターしている
+
+```
+      next if dblink['umbrella-bioproject-count'] == 0
+      next if dblink['biosample-count'] < 2
 ```
 
 ### スクリプト 利用確認
