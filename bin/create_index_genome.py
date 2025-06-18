@@ -260,6 +260,7 @@ class AssemblyReports:
         # dateのフォーマットをgenbankのフォーマットに変換
         row['seq_rel_date'] = row['seq_rel_date'].replace("-", "/") 
 
+        # TODO: annotationという変数名が内包する属性と同一で誤解の原因となるため、別の名前に変更するex.metadata
         annotation = {
             'type': 'genome',
             'identifier': row['assembly_accession'],
@@ -409,8 +410,8 @@ class AssemblyReports:
         # 星（quality）計算
         contamination = annotation['_annotation'].get('contamination', -1)
         completeness = annotation['_annotation'].get('completeness', 0)
-        sequence_count = int(annotation['_annotation'].get('_dfast', {}).get('Number of Sequences', 0))
-        rrna_count = int(annotation['_annotation'].get('_dfast', {}).get('Number of rRNAs', 0))
+        sequence_count = int(annotation.get('_dfast', {}).get('Number of Sequences', 0))
+        rrna_count = int(annotation.get('_dfast', {}).get('Number of rRNAs', 0))
 
         if annotation['has_analysis']:
             star = 1
@@ -441,7 +442,8 @@ class AssemblyReports:
         return annotation
 
 if __name__ == "__main__":
-    B2F = "/work1/mdatahub/private/insdc/b2f/20241221_All_predicted_traits.txt"
+    # bac2featureのパス.単一のファイルしかない場合は以下に指定する
+    # B2F = "/work1/mdatahub/private/insdc/b2f/20241221_All_predicted_traits.txt"
     ASSEMBLY_SUMMARY_GENBANK = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
     ASSEMBLY_SUMMARY_REFSEQ = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
     parser = argparse.ArgumentParser(description="Process genome assembly reports.")
@@ -452,5 +454,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     for summary_path in [args.insdc_path, args.refseq_path]:
+        # Bac2Featureのファイルがtypeごと存在する場合以下にパスを指定する
+        if summary_path == args.insdc_path:
+            # MAGのBac2Featureを指定
+            B2F = "/work1/mdatahub/private/insdc/b2f/assembly_summary_genbank.txt.mag.needs.bac2f.txt"
+        elif summary_path == args.refseq_path:
+            # RefSeq-単離菌のBac2Featureを指定
+            B2F = "/work1/mdatahub/private/refseq/b2f/id_organism_with_phenotype3.tsv"
         reports = AssemblyReports(summary_path, args.genome_path, args.es_bulk_api, B2F)
         reports.parse_summary()
