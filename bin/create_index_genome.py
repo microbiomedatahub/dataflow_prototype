@@ -161,6 +161,42 @@ class Bac2Feature:
             del d['MAG_ID']
             return d
 
+class GTDB_TK:
+    """
+    GTDB-TKファイルのパスを指定してGTDB-TKのtaxonomyを取得し、Dictに格納するクラス
+    genome_idをキーとして、GTDB-TKのtaxonomyを値とする辞書を生成し、引数として渡されたgenome_idに対応するGTDB-TKのtaxonomyを返す
+    """
+    def __init__(self, gtdb_tk_path):
+        self.gtdb_tk_path = gtdb_tk_path
+        self.gtdb_dict = {}
+        if os.path.exists(gtdb_tk_path):
+            with open(gtdb_tk_path, 'r') as f:
+                for line in f:
+                    parts = line.strip().split('\t')
+                    if len(parts) >= 2:
+                        genome_id = self.extract_genome_id(parts[0])
+                        self.gtdb_dict[genome_id] = parts[1]
+        else:
+            today = datetime.date.today()
+            logs(f"Error processing GTDB-TK: {gtdb_tk_path}", f"{today}_gtdbtk_error_log.txt")
+
+    def extract_genome_id(self, path):
+        """
+        パスからgenome_idを抽出するメソッド
+        """
+        parts = path.split('/')
+        for part in reversed(parts):
+            if part.startswith('GCA_') or part.startswith('GCF_'):
+                return part.split('.')[0]
+        return None
+    
+    def get_gtdb_taxonomy(self, genome_id):
+        """
+        genome_idに対応するGTDB-TKのtaxonomyを返すメソッド
+        genome_idが存在しない場合はNoneを返す
+        """
+        return self.gtdb_dict.get(genome_id, None)
+
 
 class BulkInsert:
     def __init__(self, url):
@@ -193,11 +229,13 @@ def logs(message: str, file_name: str):
 
 
 class AssemblyReports:
-    def __init__(self, summary_path, genome_path, bulk_api, b2f_path):
+    def __init__(self, summary_path, genome_path, bulk_api, b2f_path, gtdb_tk_path):
         self.summary_path = summary_path
         self.genome_path = genome_path
         # TODO: b2fファイルが存在しない場合空の空のobjを返す仕様を検討
         self.b2f = Bac2Feature(b2f_path)
+        # GTDB-TKのパスを指定してGTDB-TKのtaxonomyを取得する
+        self.gtdb_tk = GTDB_TK(gtdb_tk_path)
         self.bulkinsert = BulkInsert(bulk_api)
         self.batch_size = 1000
         self.cnt = 0
@@ -345,6 +383,7 @@ class AssemblyReports:
                 annotation['_annotation'].update(dqc_data.get('cc_result', {}))
 
                 # DFASTQCから"_gtdb_taxon"を取り出し_gtdb_taxonとして追加
+                # DEP.: GTDB taxonomyの情報はGTDB-TKから取得するように変更
                 gtdb_result = dqc_data.get('gtdb_result')
                 if gtdb_result:
                     if isinstance(gtdb_result, list):
@@ -379,7 +418,13 @@ class AssemblyReports:
         # Bac2Featureから取得
         annotation['_bac2feature'] = self.b2f.get_b2f(row['assembly_accession'])
 
-        # gtdb_taxonを取得
+        # TODO: GTDB-TKのパーサークラスを追加して_gtdb_taxonの取得を行う
+        # _gtdb_taxonを取得
+        annotation['_gtdb_taxon'] = self.gtdb_tk.get_gtdb_taxon(row)
+
+        # DEB.: GTDB taxonomyの情報はGTDB-TKの出力ファイルから取得するように変更したため不要
+        """
+        
         # _dfastqc.gtdb_resultがlistとして存在する場合、最初の要素からgtdb_taxonomyを取得する
         if type(annotation['_dfastqc'].get('gtdb_result')) is list and len(annotation['_dfastqc'].get('gtdb_result')) > 0:
             try:
@@ -395,6 +440,7 @@ class AssemblyReports:
                 annotation['_gtdb_taxon'] = []
         else:
             annotation['_gtdb_taxon'] = []
+        """
 
         # _genome_taxonにtaxonomy検索用の文字列をキーワードとして追加
         annotation['_genome_taxon'] = annotation['organism'].split(" ")
@@ -446,6 +492,7 @@ if __name__ == "__main__":
     # B2F = "/work1/mdatahub/private/insdc/b2f/20241221_All_predicted_traits.txt"
     ASSEMBLY_SUMMARY_GENBANK = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
     ASSEMBLY_SUMMARY_REFSEQ = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
+    GTDB_TK_PATH = "/work1/mdatahub/private/genomes/gtdbtk/gtdbtk.txt"
     parser = argparse.ArgumentParser(description="Process genome assembly reports.")
     parser.add_argument("-i", "--insdc_path", type=str, default=ASSEMBLY_SUMMARY_GENBANK, help="Path to the summary file.")
     parser.add_argument("-r", "--refseq_path", type=str, default=ASSEMBLY_SUMMARY_REFSEQ, help="Path to the summary file.")
@@ -461,5 +508,5 @@ if __name__ == "__main__":
         elif summary_path == args.refseq_path:
             # RefSeq-単離菌のBac2Featureを指定
             B2F = "/work1/mdatahub/private/refseq/b2f/id_organism_with_phenotype3.tsv"
-        reports = AssemblyReports(summary_path, args.genome_path, args.es_bulk_api, B2F)
+        reports = AssemblyReports(summary_path, args.genome_path, args.es_bulk_api, B2F, GTDB_TK_PATH)
         reports.parse_summary()
