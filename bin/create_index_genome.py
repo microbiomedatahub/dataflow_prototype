@@ -187,7 +187,7 @@ class GTDB_TK:
         parts = path.split('/')
         for part in reversed(parts):
             if part.startswith('GCA_') or part.startswith('GCF_'):
-                return part.split('.')[0]
+                return part
         return None
     
     def get_gtdb_taxonomy(self, genome_id):
