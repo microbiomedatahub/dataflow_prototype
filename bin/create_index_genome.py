@@ -195,7 +195,11 @@ class GTDB_TK:
         genome_idに対応するGTDB-TKのtaxonomyを返すメソッド
         genome_idが存在しない場合はNoneを返す
         """
-        return self.gtdb_dict.get(genome_id, None)
+        # 文字列では無くリストを返す
+        gtdb_taxonomy = self.gtdb_dict.get(genome_id, None)
+        if gtdb_taxonomy:
+            return gtdb_taxonomy.split(';')
+        return None
 
 
 class BulkInsert:
@@ -229,9 +233,11 @@ def logs(message: str, file_name: str):
 
 
 class AssemblyReports:
-    def __init__(self, summary_path, genome_path, bulk_api, b2f_path, gtdb_tk_path):
+    def __init__(self, summary_path, genome_path, bulk_api, dtype, b2f_path, gtdb_tk_path):
         self.summary_path = summary_path
         self.genome_path = genome_path
+        # data_typeはMAGまたはGが指定される。flagとして使用する.
+        self.dtype = dtype
         # TODO: b2fファイルが存在しない場合空の空のobjを返す仕様を検討
         self.b2f = Bac2Feature(b2f_path)
         # GTDB-TKのパスを指定してGTDB-TKのtaxonomyを取得する
@@ -271,15 +277,18 @@ class AssemblyReports:
             print(f"Exception: {e}")
                     
     def process_row(self, row):
+        # TODO: self.dtypeとしてdata_typeは指定されるためdata_typeの初期化は不要。dtypeで条件式を書き換える。
         today = datetime.date.today()
         # row['assembly_accession'] のプレフィックスがGCAの場合
-        if row['assembly_accession'].startswith('GCA'):
+        # if row['assembly_accession'].startswith('GCA'):
+        if self.dtype == "MAG":
             data_type = "MAG"
             data_source = "INSDC"
             if 'derived from metagenome' not in row.get('excluded_from_refseq', ''):
                 return
-        # row['assembly_accession'] のプレフィックスがGCFの場合                
-        elif row['assembly_accession'].startswith('GCF'):
+        # row['assembly_accession'] のプレフィックスがGCFの場合       
+        # elif row['assembly_accession'].startswith('GCF'):
+        elif self.dtype == "G":
             data_type = "G"
             data_source = "RefSeq"
             if not row['relation_to_type_material'].startswith("assembly"):
@@ -382,22 +391,22 @@ class AssemblyReports:
                 annotation['_dfastqc'] = dqc_data
                 annotation['_annotation'].update(dqc_data.get('cc_result', {}))
 
-                # DFASTQCから"_gtdb_taxon"を取り出し_gtdb_taxonとして追加
-                # DEP.: GTDB taxonomyの情報はGTDB-TKから取得するように変更
-                gtdb_result = dqc_data.get('gtdb_result')
-                if gtdb_result:
-                    if isinstance(gtdb_result, list):
-                        gtdb_result = gtdb_result[0]
+                # data_typeがGの場合（単離菌ゲノムの場合）DFASTQCから"_gtdb_taxon"を取り出し_gtdb_taxonとして追加
+                if self.dtype == "G":
+                    gtdb_result = dqc_data.get('gtdb_result')
+                    if gtdb_result:
+                        if isinstance(gtdb_result, list):
+                            gtdb_result = gtdb_result[0]
 
-                    if isinstance(gtdb_result, dict):
-                        gtdb_species = gtdb_result.get('gtdb_species')
-                        ani = gtdb_result.get('ani')
-                        gtdb_taxon = gtdb_result.get('gtdb_taxonomy')
-                        if gtdb_taxon is None:
-                            gtdb_taxon_list = gtdb_taxon.split(";")
-                            if ani > 95:
-                                gtdb_taxon_list.append(gtdb_species)
-                            annotation['_gtdb_taxon'] = gtdb_taxon_list
+                        if isinstance(gtdb_result, dict):
+                            gtdb_species = gtdb_result.get('gtdb_species')
+                            ani = gtdb_result.get('ani')
+                            gtdb_taxon = gtdb_result.get('gtdb_taxonomy')
+                            if gtdb_taxon is None:
+                                gtdb_taxon_list = gtdb_taxon.split(";")
+                                if ani > 95:
+                                    gtdb_taxon_list.append(gtdb_species)
+                                annotation['_gtdb_taxon'] = gtdb_taxon_list
 
         else:
             annotation['has_analysis'] = False
@@ -420,7 +429,7 @@ class AssemblyReports:
 
         # TODO: GTDB-TKのパーサークラスを追加して_gtdb_taxonの取得を行う
         # _gtdb_taxonを取得
-        annotation['_gtdb_taxon'] = self.gtdb_tk.get_gtdb_taxon(row)
+        annotation['_gtdb_taxon'] = self.gtdb_tk.get_gtdb_taxonomy(row['assembly_accession'])
 
         # DEB.: GTDB taxonomyの情報はGTDB-TKの出力ファイルから取得するように変更したため不要
         """
@@ -503,10 +512,12 @@ if __name__ == "__main__":
     for summary_path in [args.insdc_path, args.refseq_path]:
         # Bac2Featureのファイルがtypeごと存在する場合以下にパスを指定する
         if summary_path == args.insdc_path:
+            data_type = "MAG"
             # MAGのBac2Featureを指定
             B2F = "/work1/mdatahub/private/insdc/b2f/assembly_summary_genbank.txt.mag.needs.bac2f.txt"
         elif summary_path == args.refseq_path:
+            data_type = "G"
             # RefSeq-単離菌のBac2Featureを指定
             B2F = "/work1/mdatahub/private/refseq/b2f/id_organism_with_phenotype3.tsv"
-        reports = AssemblyReports(summary_path, args.genome_path, args.es_bulk_api, B2F, GTDB_TK_PATH)
+        reports = AssemblyReports(summary_path, args.genome_path, args.es_bulk_api, data_type, B2F, GTDB_TK_PATH)
         reports.parse_summary()

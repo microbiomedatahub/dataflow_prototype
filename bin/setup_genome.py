@@ -300,6 +300,7 @@ def process_assembly_summary(file_path, dataset):
             if (dataset == "insdc" and "derived from metagenome" in columns[20]) or (dataset == "refseq" and relation_to_type_material.startswith("assembly")):
                 genomic_file_url = download_genomic_file(genome_id, genome_url)
                 fetch_biosample_metadata(biosample_id, genome_id)
+                # TODO:execute_dfast()の実施の条件をコメントに記述する
                 #execute_dfast(genomic_file_url, genome_id)
                 count += 1
 
