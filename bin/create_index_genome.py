@@ -429,7 +429,9 @@ class AssemblyReports:
 
         # TODO: GTDB-TKのパーサークラスを追加して_gtdb_taxonの取得を行う
         # _gtdb_taxonを取得
-        annotation['_gtdb_taxon'] = self.gtdb_tk.get_gtdb_taxonomy(row['assembly_accession'])
+        # TODO: data_typeがGの場合のみ_gtdb_taxonを取得するように変更
+        if self.dtype == "G":
+            annotation['_gtdb_taxon'] = self.gtdb_tk.get_gtdb_taxonomy(row['assembly_accession'])
 
         # DEB.: GTDB taxonomyの情報はGTDB-TKの出力ファイルから取得するように変更したため不要
         """
