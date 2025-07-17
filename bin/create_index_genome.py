@@ -501,7 +501,7 @@ if __name__ == "__main__":
     # B2F = "/work1/mdatahub/private/insdc/b2f/20241221_All_predicted_traits.txt"
     ASSEMBLY_SUMMARY_GENBANK = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
     ASSEMBLY_SUMMARY_REFSEQ = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
-    GTDB_TK_PATH = "/work1/mdatahub/private/genomes/gtdbtk/gtdbtk.txt"
+    GTDB_TK_PATH = "/work1/mdatahub/private/genomes/GTDB/GTDB_tk_2025_7.txt"
     parser = argparse.ArgumentParser(description="Process genome assembly reports.")
     parser.add_argument("-i", "--insdc_path", type=str, default=ASSEMBLY_SUMMARY_GENBANK, help="Path to the summary file.")
     parser.add_argument("-r", "--refseq_path", type=str, default=ASSEMBLY_SUMMARY_REFSEQ, help="Path to the summary file.")
