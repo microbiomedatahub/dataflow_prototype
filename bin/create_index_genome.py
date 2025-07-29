@@ -199,7 +199,7 @@ class GTDB_TK:
         gtdb_taxonomy = self.gtdb_dict.get(genome_id, None)
         if gtdb_taxonomy:
             return gtdb_taxonomy.split(';')
-        return None
+        return []
 
 
 class BulkInsert:
@@ -429,8 +429,8 @@ class AssemblyReports:
 
         # TODO: GTDB-TKのパーサークラスを追加して_gtdb_taxonの取得を行う
         # _gtdb_taxonを取得
-        # TODO: data_typeがGの場合のみ_gtdb_taxonを取得するように変更
-        if self.dtype == "G":
+        # TODO: data_typeがMAGの場合のみ_gtdb_taxonを取得するように変更
+        if self.dtype == "MAG":
             annotation['_gtdb_taxon'] = self.gtdb_tk.get_gtdb_taxonomy(row['assembly_accession'])
 
         # DEB.: GTDB taxonomyの情報はGTDB-TKの出力ファイルから取得するように変更したため不要
@@ -455,6 +455,7 @@ class AssemblyReports:
 
         # _genome_taxonにtaxonomy検索用の文字列をキーワードとして追加
         annotation['_genome_taxon'] = annotation['organism'].split(" ")
+        # _gtdb_taxonのlen()が評価されるので_gtdb_taxonはlistである必要がある
         if len(annotation.get('_gtdb_taxon', [])) > 0:
             # _gtdb_taxonが存在する場合、_genome_taxonに追加
             annotation['_genome_taxon'].extend(annotation['_gtdb_taxon'])
