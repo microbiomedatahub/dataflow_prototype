@@ -568,7 +568,7 @@ class AssemblyReports:
                 annotation['_genome_taxon'].extend(gtdb_taxon.replace("_", " ").split(" "))
         
         # _meoにMEOのIDとラベルを配列で追加
-        if self.meo:
+        if self.meo_mapping:
             meo_data = self.meo_mapping.get(row['assembly_accession'])
             if meo_data:
                 annotation['_meo'] = meo_data
