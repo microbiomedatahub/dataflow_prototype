@@ -332,7 +332,7 @@ def logs(message: str, file_name: str):
 
 
 class AssemblyReports:
-    def __init__(self, summary_path, genome_path, bulk_api, dtype, b2f_path, gtdb_tk_path):
+    def __init__(self, summary_path, genome_path, bulk_api, dtype, b2f_path, gtdb_tk_path, meo_tsv_path):
         self.summary_path = summary_path
         self.genome_path = genome_path
         # data_typeはMAGまたはGが指定される。flagとして使用する.
@@ -340,7 +340,7 @@ class AssemblyReports:
         # TODO: b2fファイルが存在しない場合空のobjを返す仕様を検討
         self.b2f = Bac2Feature(b2f_path)
         # dtypeがMAGの場合MEO辞書を読み込む。
-        self.meo = TSV2MEO(MEO_TSV_PATH) if dtype == "MAG" else None
+        self.meo = TSV2MEO(meo_tsv_path) if dtype == "MAG" else None
         # GTDB-TKのパスを指定してGTDB-TKのtaxonomyを取得する
         self.gtdb_tk = GTDB_TK(gtdb_tk_path)
         self.bulkinsert = BulkInsert(bulk_api)
