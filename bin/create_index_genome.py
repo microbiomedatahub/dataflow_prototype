@@ -568,7 +568,7 @@ class AssemblyReports:
         
         # _meoにMEOのIDとラベルを配列で追加
         if self.meo:
-            meo_data = self.meo.get_meo_data(row['assembly_accession'])
+            meo_data = self.meo.parse(row['assembly_accession'])
             if meo_data:
                 annotation['_meo'] = meo_data
 
