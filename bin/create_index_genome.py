@@ -8,6 +8,7 @@ import argparse
 from xml.etree import ElementTree as ET
 import urllib.request
 import urllib.parse
+from pathlib import Path
 
 
 def asm_acc2path(asm_acc:str) -> str:
@@ -201,7 +202,6 @@ class GTDB_TK:
             return gtdb_taxonomy.split(';')
         return []
 
-
 class BulkInsert:
     def __init__(self, url):
         self.es_url = url
@@ -226,6 +226,105 @@ class BulkInsert:
                 file_name = f"{today}_bulkinsert_error_log.txt"
                 logs(log_str, file_name)
 
+class TSV2MEO:
+    """
+    タブ区切りファイルを { accession: [ {meo_id, meo_label}, ... ] } に変換するクラス
+    """
+    def __init__(self, tsv_path: str, encoding: str = "cp932"):
+        self.tsv_path = Path(tsv_path)
+        self.encoding = encoding
+
+    def _make_unique_headers(self, headers):
+        """同名カラムが複数ある場合に __1, __2 ... を付けてユニーク化"""
+        seen = {}
+        unique = []
+        for h in headers:
+            n = seen.get(h, 0)
+            if n == 0:
+                unique.append(h)
+            else:
+                unique.append(f"{h}__{n}")
+            seen[h] = n + 1
+        return unique
+
+    def _first_header_startswith(self, headers, prefix):
+        """ヘッダの中から指定 prefix で始まる最初のカラム名を返す"""
+        for h in headers:
+            if h.startswith(prefix):
+                return h
+        return None
+
+    def _normalize(self, s):
+        """空や NA を無効化"""
+        if s is None:
+            return ""
+        s = str(s).strip()
+        if s == "" or s.upper() == "NA":
+            return ""
+        return s
+
+    def parse(self) -> dict:
+        """
+        TSV ファイルを読み込み、辞書を返す
+        { accession: [ {meo_id, meo_label}, ... ] }
+        """
+        with self.tsv_path.open("r", newline="", encoding=self.encoding) as f:
+            raw_reader = csv.reader(f, delimiter="\t")
+            try:
+                raw_headers = next(raw_reader)
+            except StopIteration:
+                raise ValueError("空ファイルです")
+
+            headers = self._make_unique_headers(raw_headers)
+            accession_col = self._first_header_startswith(headers, "Assembly Accession")
+            if not accession_col:
+                raise ValueError('"Assembly Accession" 列が見つかりません')
+
+            # MEO 系のカラムを探索
+            meo_id_cols    = [h for h in headers if h.startswith("MEOID")] or [h for h in headers if h.startswith("MOID")]
+            meo_label_cols = [h for h in headers if h.startswith("MEOlabel")]
+            meo_pairs = []
+            max_len = max(len(meo_id_cols), len(meo_label_cols)) if (meo_id_cols or meo_label_cols) else 0
+            for k in range(max_len):
+                id_col    = meo_id_cols[k]    if k < len(meo_id_cols)    else None
+                label_col = meo_label_cols[k] if k < len(meo_label_cols) else None
+                meo_pairs.append((id_col, label_col))
+
+            # DictReader で再度読み込み
+            f.seek(0)
+            dict_reader = csv.DictReader(f, fieldnames=headers, delimiter="\t")
+            next(dict_reader)  # ヘッダをスキップ
+
+            out = {}
+            gc_regex = re.compile(r"^(GCA|GCF)_\d+\.\d+$")
+
+            for row in dict_reader:
+                acc = self._normalize(row.get(accession_col))
+                if not acc:
+                    continue
+
+                # 複数の "Assembly Accession" がある場合に GCA/GCF 形式なら優先
+                alt_acc_cols = [h for h in headers if h != accession_col and h.startswith("Assembly Accession")]
+                for h in alt_acc_cols:
+                    cand = self._normalize(row.get(h))
+                    if cand and gc_regex.match(cand):
+                        acc = cand
+                        break
+
+                meo_list = []
+                for (id_col, label_col) in meo_pairs:
+                    meo_id    = self._normalize(row.get(id_col))    if id_col    else ""
+                    meo_label = self._normalize(row.get(label_col)) if label_col else ""
+                    if meo_id or meo_label:
+                        entry = {}
+                        if meo_id:    entry["id"] = meo_id
+                        if meo_label: entry["label"] = meo_label
+                        meo_list.append(entry)
+
+                out.setdefault(acc, []).extend(meo_list)
+
+        return out
+
 
 def logs(message: str, file_name: str):
     with open(f"bin/logs/{file_name}", "a") as f:
@@ -238,8 +337,10 @@ class AssemblyReports:
         self.genome_path = genome_path
         # data_typeはMAGまたはGが指定される。flagとして使用する.
         self.dtype = dtype
-        # TODO: b2fファイルが存在しない場合空の空のobjを返す仕様を検討
+        # TODO: b2fファイルが存在しない場合空のobjを返す仕様を検討
         self.b2f = Bac2Feature(b2f_path)
+        # dtypeがMAGの場合MEO辞書を読み込む。
+        self.meo = TSV2MEO(MEO_TSV_PATH) if dtype == "MAG" else None
         # GTDB-TKのパスを指定してGTDB-TKのtaxonomyを取得する
         self.gtdb_tk = GTDB_TK(gtdb_tk_path)
         self.bulkinsert = BulkInsert(bulk_api)
@@ -465,6 +566,12 @@ class AssemblyReports:
                     gtdb_taxon = gtdb_taxon[3:]
                 annotation['_genome_taxon'].extend(gtdb_taxon.replace("_", " ").split(" "))
         
+        # _meoにMEOのIDとラベルを配列で追加
+        if self.meo:
+            meo_data = self.meo.get_meo_data(row['assembly_accession'])
+            if meo_data:
+                annotation['_meo'] = meo_data
+
         # 星（quality）計算
         contamination = annotation['_annotation'].get('contamination', -1)
         completeness = annotation['_annotation'].get('completeness', 0)
@@ -505,6 +612,7 @@ if __name__ == "__main__":
     ASSEMBLY_SUMMARY_GENBANK = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_genbank.txt"
     ASSEMBLY_SUMMARY_REFSEQ = "/work1/mdatahub/private/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt"
     GTDB_TK_PATH = "/work1/mdatahub/private/genomes/GTDB/GTDB_tk_2025_7.txt"
+    MEO_TSV_PATH = "/work1/mdatahub/private/genomes/MEO/20250816_MDatahub_MAG_MAGInfo18.txt"
     parser = argparse.ArgumentParser(description="Process genome assembly reports.")
     parser.add_argument("-i", "--insdc_path", type=str, default=ASSEMBLY_SUMMARY_GENBANK, help="Path to the summary file.")
     parser.add_argument("-r", "--refseq_path", type=str, default=ASSEMBLY_SUMMARY_REFSEQ, help="Path to the summary file.")
@@ -522,5 +630,5 @@ if __name__ == "__main__":
             data_type = "G"
             # RefSeq-単離菌のBac2Featureを指定
             B2F = "/work1/mdatahub/private/refseq/b2f/id_organism_with_phenotype3.tsv"
-        reports = AssemblyReports(summary_path, args.genome_path, args.es_bulk_api, data_type, B2F, GTDB_TK_PATH)
+        reports = AssemblyReports(summary_path, args.genome_path, args.es_bulk_api, data_type, B2F, GTDB_TK_PATH, MEO_TSV_PATH)
         reports.parse_summary()
