@@ -340,7 +340,8 @@ class AssemblyReports:
         # TODO: b2fファイルが存在しない場合空のobjを返す仕様を検討
         self.b2f = Bac2Feature(b2f_path)
         # dtypeがMAGの場合MEO辞書を読み込む。
-        self.meo = TSV2MEO(meo_tsv_path) if dtype == "MAG" else None
+        meo = TSV2MEO(meo_tsv_path) if dtype == "MAG" else None
+        self.meo_mapping = meo.parse() if meo else {}
         # GTDB-TKのパスを指定してGTDB-TKのtaxonomyを取得する
         self.gtdb_tk = GTDB_TK(gtdb_tk_path)
         self.bulkinsert = BulkInsert(bulk_api)
@@ -568,7 +569,7 @@ class AssemblyReports:
         
         # _meoにMEOのIDとラベルを配列で追加
         if self.meo:
-            meo_data = self.meo.parse(row['assembly_accession'])
+            meo_data = self.meo_mapping.get(row['assembly_accession'])
             if meo_data:
                 annotation['_meo'] = meo_data
 
