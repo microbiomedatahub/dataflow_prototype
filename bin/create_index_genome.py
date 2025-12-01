@@ -371,6 +371,9 @@ class AssemblyReports:
                                 self.bulkinsert.insert(docs)
                                 docs = []
                                 l = 0
+                        elif doc is None:
+                            # INSDC MAGでhas_analysis=False（quality=0）のレコードは追加しない
+                            continue
                 if len(docs) > 0:
                     self.bulkinsert.insert(docs)
                 print(f"{self.cnt} records processed.")
@@ -592,20 +595,24 @@ class AssemblyReports:
         else:
             star = 0
 
-        annotation['quality'] = star
-        annotation['quality_label'] = '⭐️' * star
+        # data_source="INSDC"かつquality=0の場合そのレコードは追加しない
+        if self.dtype == "MAG" and star == 0:
+            return None
+        else:
+            annotation['quality'] = star
+            annotation['quality_label'] = '⭐️' * star
 
 
-        # genome.json出力
-        genome_json_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.json')
-        with open(genome_json_path, 'w') as genome_file:
-            json.dump(annotation, genome_file, indent=4)
+            # genome.json出力
+            genome_json_path = os.path.join(self.genome_path, asm_acc2path(row['assembly_accession']), row['assembly_accession'], 'genome.json')
+            with open(genome_json_path, 'w') as genome_file:
+                json.dump(annotation, genome_file, indent=4)
 
-        # print(json.dumps(annotation, indent=4))
-        # print(row['assembly_accession'])
-        # DEP.: ESに直接insertするのでjsonlを作らない
-        # out.write(json.dumps(annotation) + '\n')
-        return annotation
+            # print(json.dumps(annotation, indent=4))
+            # print(row['assembly_accession'])
+            # DEP.: ESに直接insertするのでjsonlを作らない
+            # out.write(json.dumps(annotation) + '\n')
+            return annotation
 
 if __name__ == "__main__":
     # bac2featureのパス.単一のファイルしかない場合は以下に指定する

@@ -1,110 +1,182 @@
+from __future__ import annotations
 import csv
 import json
-import os
 import re
-import datetime
-import argparse
-import urllib.request
-from io import StringIO
-from collections import Counter
+from pathlib import Path
+from typing import Dict, Iterable, List, Tuple, OrderedDict
+from collections import OrderedDict as _OrderedDict
 
 
-def read_csv(file_path) -> list:
+def read_ontology_map(path: str | Path) -> "OrderedDict[str, str]":
     """
-    CSVファイルを読み込み、各行をリストに格納する
+    ontology_label.tsv を読み込んで、順序付きの {ontology_id: label} を返す。
+    - 2列（id, label）。ヘッダー行の有無は自動判定。
     """
-    with open(file_path) as f:
-        reader = csv.reader(f)
-        data = [row[0].split('\t') for row in reader]
-    return data
+    path = Path(path)
+    mapping: "OrderedDict[str, str]" = _OrderedDict()
+
+    with path.open(newline="", encoding="utf-8") as f:
+        reader = csv.reader(f, delimiter="\t")
+        rows = list(reader)
+
+    if not rows:
+        return mapping
+
+    # ヘッダー自動判定
+    head = rows[0]
+    start_idx = 1 if (len(head) >= 2 and {"id", "label"} <= {h.strip().lower() for h in head[:2]}) else 0
+
+    for row in rows[start_idx:]:
+        if len(row) < 2:
+            continue
+        oid = row[0].strip()
+        label = row[1].strip()
+        if oid:
+            mapping[oid] = label or oid  # ラベル欠損時はIDを代用
+    return mapping
 
 
-def read_ko(url) -> dict:
+def read_sample_matrix(path: str | Path) -> Tuple[List[str], List[List[str]]]:
     """
-    TXTファイルを読み込み、各行をリストに格納し先頭２要素をk:vとしたdictを返す
+    sample.tsv を行列として読み込む。
+    戻り値: (rows[0] をヘッダーと解釈した場合の header, すべての行データ)
+    - ヘッダーの有無はこの後のロジック側で判定するため、ここではただ返すだけ。
     """
-    with urllib.request.urlopen(url) as response:
-        data = response.read().decode('utf-8')  # UTF-8でデコード（必要に応じて変更）
-        text_io = StringIO(data)
-        lines = []
-        for line in text_io:
-            lines.append(line.rstrip().split('\t'))
+    path = Path(path)
+    with path.open(newline="", encoding="utf-8") as f:
+        reader = csv.reader(f, delimiter="\t")
+        rows = list(reader)
 
-        data = {row[0]: row[1] for row in lines}
-    return data
+    if not rows:
+        return [], []
+    return rows[0], rows
 
 
-def read_description(file_path) -> list:
+def is_truthy(x: str) -> bool:
     """
-    TSVファイルを読み込み先頭のIDをkeyとしてdescriptionをvalueとしたdictを返す
+    '1','true','yes','on','t','y' などを True とみなす。
     """
-    with open(file_path) as f:
-        reader = csv.reader(f, delimiter='\t')
-        data = {row[0]: row[1] for row in reader}
-    return data
+    if x is None:
+        return False
+    s = str(x).strip().lower()
+    return s in {"1", "true", "yes", "y", "t", "on"}
+
+
+# DEP> create_output_directory は下に移動
+def sample_out_dir(root: str | Path, sample_id: str) -> Path:
+    """
+    サンプルごとの出力ディレクトリを決める（必要なら好きなロジックに差し替え）。
+    """
+    return Path(root) / sample_id
 
 
 def create_output_directory(root_path, mag_id) -> str:
     """
     出力先のpathを生成する
-    /hoge/hoge/public/genome/GCA/xxx
-    ex. /hoge/hoge/public/genome/GCA/949/121/495/GCA_949121495.1
-    ex. /hoge/hoge/public/genome/GCA/000/192/595/GCA_000192595.1
-    /hoge/hoge/public/genome/GCF/xxx
+    ./public/genome/GCA/xxx
+    ex. ./public/genome/GCA/949/121/495/GCA_949121495.1
+    ex. ./public/genome/GCA/000/192/595/GCA_000192595.1
     """
     mag_id_str = re.sub(r"[_.]", "", mag_id)
     mag_id_lst = [mag_id_str[i:i+3] for i in range(0, len(mag_id_str), 3)]
-    # TODO: ファイル名修正
-    output_path = f"{root_path}/{mag_id_lst[0]}/{mag_id_lst[1]}/{mag_id_lst[2]}/{mag_id_lst[3]}/{mag_id}/mgbd.json"
+    output_path = f"{root_path}/{mag_id_lst[0]}/{mag_id_lst[1]}/{mag_id_lst[2]}/{mag_id_lst[3]}/{mag_id}/module.json"
+    # 開発用の簡易パス
+    print("output_path:", output_path)
+    output_path = f"{root_path}/{mag_id}/module.json"
     return output_path
-     
 
-def main():
+
+# ---------- 主要処理 ----------
+def generate_jsons(
+    ontology_tsv: str | Path,
+    sample_tsv: str | Path,
+    out_root: str | Path,
+    #output_filename: str = "module.json",
+) -> None:
     """
-    - MAG IDとortholog cluster IDの対応表を取得する。
-    - MAGとortholog cluster IDの対応を集計しかつcluster idにKOをマッピングする。
-    - 集計した結果を各MAGごとにディレクトリにJSONL形式で出力する。
+    - ontology_tsv: 2列（id, label）
+    - sample_tsv: 1列目が sample_id、2列目以降がオントロジー列（ヘッダー名=オントロジーID でも可）
+    - out_root/sample_id/ontologies.json に書き出す
     """
-    # cl引数で指定する場合argparseのコメントを外す
-    # parser = argparse.ArgumentParser(description='create_mbgd_genome')
-    # parser.add_argument('--mags', '-m', help='mag-ortholog file path')
-    # parser.add_argument('--ko', '-k', help='kegg orthology table url')
-    #parser.add_argument('--output', '-o', help='output root directory')
-    # args = parser.parse_args()
-    mags_path = "../testdata/test_mbgd_cluster.txt" 
-    ko_url = "https://mbgd.nibb.ac.jp/tmp/microbedb/mbgd_kegg_xref_default.txt"
-    genome_root_path = "/public/genome"
-    # clusterのdescriptinを追加
-    description_path = "public/dev/mbgdcluster.tsv"
+    ont_map = read_ontology_map(ontology_tsv)  # Ordered {id: label}
+    ontology_ids_in_order = list(ont_map.keys())
 
-    # CSVファイルを読み込み、各行を辞書型に変換してリストに格納する
-    mag_list = read_csv(mags_path)
-    ko_map = read_ko(ko_url)
-    # descrioption_mapは枝番を除いたclust idをkeyとするdict
-    description_map = read_description(description_path)
-    # MAGの1レコードごとの処理
-    for mag in mag_list:
-        # MAG IDをパースする
-        mag_id  = "_".join(mag[0].split("_")[0:2])
-        # cluster idをカウントする
-        cluster_id = mag[1:]
-        d = [{"id": k, "count": v, "ko": ko_map.get(k, ""), "description": description_map.get( f"{k:.0f}","")} 
-             for k,v in Counter(cluster_id).items() if k != ""]
-        # 出力先のディレクトリを作成し
-        # マッピング結果をJSONL形式で出力する
-        today = datetime.date.today()
-        try:
-            with open(create_output_directory(genome_root_path, mag_id), 'w') as f:
-                json.dump(d, f, indent=4, ensure_ascii=False)
-                # 出力したMAGは作業日のlogファイルにIDを追記する
-            with open(f"{today}_mbgd_logs.txt", 'a') as log_f:
-                log_f.write(f"{mag_id}\n")
-        except FileNotFoundError as e:
-            # ディレクトリが存在しない場合はerror logを出力する
-            # TODO: logファイルの出力先を指定する
-            with open(f"{today}_mbgd_errors.txt", 'a') as log_e:
-                log_e.write(f"{mag_id} {e}\n")
+    header_first_row, rows = read_sample_matrix(sample_tsv)
+    if not rows:
+        return
+
+    # ヘッダー有無の判定
+    # 実際のソースファイルは先頭3行にontologyのラベルを含むがそれらは事前に取り除いておくことを想定する
+    # 条件: 2列目以降のヘッダーが "全て ont_map に含まれるID" ならヘッダーありとみなす
+    has_header = False
+    if header_first_row and len(header_first_row) >= 2:
+        candidate_ids = [h.strip() for h in header_first_row[1:]]
+        if candidate_ids and all(cid in ont_map for cid in candidate_ids):
+            has_header = True
+
+    # データ行の開始位置
+    start_idx = 1 if has_header else 0
+
+    # オントロジー列のID並び（ヘッダーがあればそれを優先、無ければ ont_map の順）
+    ontology_id_columns: List[str]
+    if has_header:
+        ontology_id_columns = [h.strip() for h in rows[0][1:]]
+    else:
+        ontology_id_columns = ontology_ids_in_order
+
+    # 列数の妥当性チェック（無ヘッダー時にズレていないか）
+    expected_cols = 1 + len(ontology_id_columns)
+
+    for r in rows[start_idx:]:
+        if not r:
+            continue
+        # 足りない/多い列は丸める
+        row = (r + [""] * expected_cols)[:expected_cols]
+
+        sample_id = row[0].strip()
+        if not sample_id:
+            continue
+
+        bits = row[1:]
+        present_ontology_ids = [
+            oid for oid, bit in zip(ontology_id_columns, bits) if is_truthy(bit)
+        ]
+
+        # 出力する {id, label} の配列を作成
+        payload = [{"id": oid, "label": ont_map.get(oid, oid)} for oid in present_ontology_ids]
+
+        # id属性の値でソート
+        payload.sort(key=lambda x: x["id"])
+
+        # 書き出し
+        out_path_str = create_output_directory(out_root, sample_id)
+        out_path = Path(out_path_str)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with out_path.open("w", encoding="utf-8") as fw:
+            json.dump(payload, fw, ensure_ascii=False, indent=2)
 
 
-if __name__ == '__main__':
-    main()
+# ---------- CLI ----------
+if __name__ == "__main__":
+    import argparse
+
+    ap = argparse.ArgumentParser(
+        description="Generate per-sample ontology JSON files from TSVs."
+    )
+    ap.add_argument("--ontology-tsv", required=True, help="Path to ModuleList_name.tsv  (id,label)")
+    ap.add_argument("--sample-tsv", required=True, help="Path to maple_matrix.txt (sample matrix)")
+    ap.add_argument("--out-root", required=True, help="Directory to write per-sample JSONs")
+    # ファイル名はmbgd.jsonに固定するためコメントアウト
+    # ap.add_argument("--filename", default="ontologies.json", help="Output JSON filename per sample")
+    args = ap.parse_args()
+
+    # default値は
+    # ontology-tsv: ModuleList_name.tsv
+    # sample-tsv: maple_matrix.txt
+
+    generate_jsons(
+        ontology_tsv=args.ontology_tsv,
+        sample_tsv=args.sample_tsv,
+        out_root=args.out_root
+        #output_filename="mbgd.json",
+    )
