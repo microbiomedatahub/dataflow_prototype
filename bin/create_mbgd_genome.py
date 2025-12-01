@@ -166,7 +166,7 @@ if __name__ == "__main__":
     ap.add_argument("--ontology-tsv", required=True, help="Path to ModuleList_name.tsv  (id,label)")
     ap.add_argument("--sample-tsv", required=True, help="Path to maple_matrix.txt (sample matrix)")
     ap.add_argument("--out-root", required=True, help="Directory to write per-sample JSONs")
-    # ファイル名はmbgd.jsonに固定するためコメントアウト
+    # ファイル名はmodule.jsonに固定するためコメントアウト
     # ap.add_argument("--filename", default="ontologies.json", help="Output JSON filename per sample")
     args = ap.parse_args()
 
@@ -178,5 +178,5 @@ if __name__ == "__main__":
         ontology_tsv=args.ontology_tsv,
         sample_tsv=args.sample_tsv,
         out_root=args.out_root
-        #output_filename="mbgd.json",
+        #output_filename="module.json",
     )
