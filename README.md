@@ -23,6 +23,13 @@ python3 bin/setup_genome.py refseq
 
 ```
 
+MBGD id,label情報を配置
+
+```
+python3 bin/create_mbgd_genome.py --ontology-tsv /work1/mdatahub/public/mbgd/ModuleList_name.tsv --sample-tsv /work1/mdatahub/public/mbgd/maple_matrix.txt --out-root /work1/mdatahub/public/genome
+```
+
+
 ## 2-2. 実行方法
 genomeインデックスのレコードgenome.jsonを生成し、JSONLを生成せず直接Elasticsearchに投入される
 
